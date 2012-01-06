@@ -12,6 +12,7 @@
 
 #---- END OF COMMENT ----
 
-lex SOME_LEX_FILE
+rm a.out
+flex "$1"
 gcc lex.yy.c -ll
-./a.out INPUT_FILE_NAME
+./a.out "$2"
