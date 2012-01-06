@@ -1,0 +1,17 @@
+# This file can be used to compile and run your program, instead of typing "gcc blah blah..." in the terminal everytime.
+
+# USING THIS FILE - 
+
+#1)
+
+#2)
+
+#3) In the terminal, make this file executable by typing (don't type the double quotes, of course) "chmod a+x MAKEFILE".
+
+#4) Then type "./MAKEFILE".
+
+#---- END OF COMMENT ----
+
+lex SOME_LEX_FILE
+gcc lex.yy.c -ll
+./a.out INPUT_FILE_NAME
