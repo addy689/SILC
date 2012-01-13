@@ -13,7 +13,8 @@
 #---- END OF COMMENT ----
 
 rm a.out
+rm "$1".tab.c
 flex ../LexYacc_Specs/"$1".l
 bison ../LexYacc_Specs/"$1".y
-gcc "$1".tab.c -ly -ll
+gcc "$1".tab.c -ll
 ./a.out
