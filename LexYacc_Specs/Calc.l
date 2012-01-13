@@ -15,6 +15,11 @@
 . { yyerror("Unknown input"); }
 
 %%
+int yyerror (void)
+{
+	return 1;
+}
+
 int yywrap(void)
 {
   return 1;
