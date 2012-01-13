@@ -6,6 +6,7 @@ Test/
 
 Main/makefile
 Main/lex.yy.c
+Main/*.tab.c
 
 *.o
 */*.o

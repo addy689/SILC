@@ -14,11 +14,11 @@ DIGIT	[0-9]
 
 %%
 //Read Input File
-int main(int argc, char *argv[])
+int main(/*int argc, char *argv[]*/)
 {
-	yyin=fopen(argv[1],"r");
+/*	yyin=fopen(argv[1],"r");*/
 	yylex();
-	fclose(yyin);
-	
+/*	fclose(yyin);*/
+
 	return 0;
 }
