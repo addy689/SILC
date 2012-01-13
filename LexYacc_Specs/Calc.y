@@ -1,6 +1,5 @@
 %{
 	#include<stdio.h>
-	#include<stdlib.h>
 %}
 %start list
 %token DIGIT
