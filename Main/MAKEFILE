@@ -14,7 +14,13 @@
 
 rm a.out
 rm "$1".tab.c
-flex ../LexYacc_Specs/"$1".l
-bison ../LexYacc_Specs/"$1".y
+rm lex.yy.c
+
+#flex ../LexYacc_Spec/SelfHelp/"$1".l
+#bison ../LexYacc_Spec/SelfHelp/"$1".y
+
+#flex ../LexYacc_Spec/SimpleCalc/"$1".l
+#bison ../LexYacc_Spec/SimpleCalc/"$1".y
+
 gcc "$1".tab.c -ll
 ./a.out

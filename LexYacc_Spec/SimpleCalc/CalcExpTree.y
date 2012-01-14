@@ -4,20 +4,25 @@
 
 %{
 	#include<stdio.h>
-		
-	struct Tnode {
+	#include<stdlib.h>
+	#define ADD 1
+	#define SUB 2
+	#define MUL 3
+	#define DIV 4
+	
+	typedef struct Tnode {
 			int val;
 			char op;
 			int flag;
 			struct Tnode *l,*r;
-	}
+	}NODE;
 
 %}
-%union {	struct Tnode *T;
+%union {	NODE *T;
 			}
 %start list
-%token <Tnode *T> DIGIT
-%type <Tnode *T> expr
+%token <T> DIGIT
+%type <T> expr
 %left '+' '-'
 %left '*' '/'
 
@@ -28,28 +33,28 @@ list	:	list expr '\n'
 		|
 		;
 
-expr	:	expr '+' expr 
-			{	$$ = $1 + $3;
+expr	:	expr '+' expr
+			{	$$->l = $1;
+				$$->r = $3;
 				}
 		
-		|	expr '-' expr 
-			{	$$ = $1 - $3;
+		|	expr '-' expr
+			{	$$->l = $1;
+				$$->r = $3;
 				}
 		
-		|	expr '*' expr 
-			{	$$ = $1 * $3; 
+		|	expr '*' expr
+			{	$$->l = $1;
+				$$->r = $3;; 
 				}
 		
-		|	expr '/' expr 
-			{	$$ = $1 / $3;
+		|	expr '/' expr
+			{	$$->l = $1;
+				$$->r = $3;;
 				}
 		
 		|	'(' expr ')'
 			{	$$ = $2;
-				}
-		
-		|	'-' expr
-			{	$$ = -1 * $2;
 				}
 		
 		|	DIGIT

@@ -3,9 +3,11 @@
 */
 
 %%
+[+]	
 [ \t]+$		;
 [ \t]+		printf("+");
-
+[0-9]+		ECHO;
+. printf("+");
 %%
 //Read Input File
 int main(/*int argc, char *argv[]*/)
