@@ -1,18 +1,16 @@
 /*
-	This file contains the Lex file specification for implementing a simple calculator
+	This file contains the Lex specification for implementing a simple calculator
 */
 
 %%
 [\t ]+ ;
 
-[0-9]+			{	yylval = atoi(yytext);
+[0-9]+			{	yylval = yytext;
 					return DIGIT;
 					}
 
 [-+*\/\(\)\n]	{	return (int) yytext[0];
 					}
-
-. { yyerror("Unknown input"); }
 
 %%
 int yyerror (void)

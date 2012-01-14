@@ -1,12 +1,23 @@
 /*
-	This file contains the Yacc file specification for implementing a simple calculator
+	This file contains the Yacc file specification for implementing a simple calculator and an expression tree
 */
 
 %{
 	#include<stdio.h>
+		
+	struct Tnode {
+			int val;
+			char op;
+			int flag;
+			struct Tnode *l,*r;
+	}
+
 %}
+%union {	struct Tnode *T;
+			}
 %start list
-%token DIGIT
+%token <Tnode *T> DIGIT
+%type <Tnode *T> expr
 %left '+' '-'
 %left '*' '/'
 

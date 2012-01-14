@@ -1,9 +1,14 @@
+/*
+	This file contains the Yacc specification for obtaining PREFIX notation of an expression
+*/
+
 %{
 	#include<stdio.h>
 	#include<string.h>
 	char prefix[300];
 %}
-%union { char value[300]; }
+%union {	char value[300];
+			}
 %start list
 %token <value> DIGIT
 %type <value> expr

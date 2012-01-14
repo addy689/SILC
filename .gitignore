@@ -8,6 +8,9 @@ Main/makefile
 Main/lex.yy.c
 Main/*.tab.c
 
+LexYacc_Specs/*.tab.c
+LexYacc_Specs/lex.yy.c
+
 *.o
 */*.o
 */*/*.o
