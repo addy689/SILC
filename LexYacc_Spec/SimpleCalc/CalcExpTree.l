@@ -2,36 +2,47 @@
 	This file contains the Lex specification for implementing a simple calculator
 */
 
+%{
+	struct Tnode* allocateNode(int,int,char);
+%}
+
 %%
 [\t ]+ ;
 
-[0-9]+			{	yylval->T = malloc(sizeof(struct Tnode));
-					yylval->T.val = atoi(yytext);
-					yylval->T.flag = 0;
-					(yylval->T)->l = (yylval->T)->r = NULL;
+[0-9]+			{	yylval.T = allocateNode(atoi(yytext),0,'\0');
 					return DIGIT;
 					}
 
-[-+*\/]			{	yylval->T = malloc(sizeof(struct Tnode));
-					yylval->T.op = yytext[0];
+[-+*\/\(\)\n]		{	switch(yytext[0])
+					{
+						case '+':	yylval.T = allocateNode(0,ADD,'+');
+									break;
+						case '-':	yylval.T = allocateNode(0,SUB,'-');
+									break;
+						case '*':	yylval.T = allocateNode(0,MUL,'*');
+									break;
+						case '/':	yylval.T = allocateNode(0,DIV,'/');
+									break;
+						default :	;
+					}
 					
-					switch(yytext[0])
-						{
-							case '+':	yylval->T.flag = ADD;
-										break;
-							case '-':	yylval->T.flag = SUB;
-										break;
-							case '*':	yylval->T.flag = MUL;
-										break;
-							case '/':	yylval->T.flag = DIV;
-										break;
-						}
-
-					(yylval->T)->l = (yylval->T)->r = NULL;
-					return '+';
+					return yytext[0];
 					}
 
 %%
+struct Tnode* allocateNode(int value,int flg,char optr)
+{
+	struct Tnode *N;
+	N = malloc(sizeof(struct Tnode));
+	
+	N->val = value;
+	N->flag = flg;
+	N->op = optr;
+	N->l = N->r = NULL;
+	
+	return N;
+}
+
 int yyerror (void)
 {
 	return 1;
