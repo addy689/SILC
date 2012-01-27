@@ -1,32 +1,28 @@
 /*
-	This file contains the Lex specification for implementing a simple calculator
+	This file contains the Lex specification for constructing an expression tree for a SIL program
 */
 
 %%
 [\t ]+	;
 
-BEGIN			{	return begin;
-					}
-
-END				{	return end;
-					}
-
-[a-z]			{	yylval.T = allocateNode(0,VRBL,'\0',yytext[0]-'a');
-					
-					printf("\nYeah baby");
-					
-					return VAR;
-					}
-
-read			{	yylval.T = allocateNode(0,RD,'\0',-1);
+read			{	printf("Token '%s' detected by LEX!",yytext);
+					yylval.T = allocateNode(0,RD,'\0',-1);
 					return READ;
 					}
 
-[0-9]+			{	yylval.T = allocateNode(atoi(yytext),NUM,'\0',-1);
+[a-z]			{	printf("\nAlpha token '%c' detected by LEX!",yytext[0]);
+					yylval.T = allocateNode(0,VRBL,'\0',yytext[0]-'a');
+					return VAR;
+					}
+
+
+[0-9]+			{	printf("\nNumber token '%c' detected by LEX!",yytext[0]);
+					yylval.T = allocateNode(atoi(yytext),NUM,'\0',-1);
 					return DIGIT;
 					}
 
-[-+*\/\(\)\n\;\=]	{	switch(yytext[0])
+[-+*\/\(\)\n\;\=]	{	printf("\nToken '%c' detected by LEX!",yytext[0]);
+						switch(yytext[0])
 						{
 							case '+':	yylval.T = allocateNode(0,ADD,'+',-1);
 										break;
@@ -47,7 +43,7 @@ read			{	yylval.T = allocateNode(0,RD,'\0',-1);
 %%
 struct Tnode* allocateNode(int value,int flg,char optr,int binding)
 {
-	printf("\nAllocating");
+	printf("\nAllocating\n");
 	struct Tnode *N;
 	N = malloc(sizeof(struct Tnode));
 	

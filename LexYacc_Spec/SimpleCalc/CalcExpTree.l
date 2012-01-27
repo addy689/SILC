@@ -1,5 +1,5 @@
 /*
-	This file contains the Lex specification for implementing a simple calculator
+	This file contains the Lex specification for implementing an expression tree for a calculator
 */
 
 %{

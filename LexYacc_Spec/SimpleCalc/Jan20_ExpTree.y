@@ -1,5 +1,5 @@
 /*
-	This file contains the Yacc file specification for implementing a simple calculator and an expression tree
+	This file contains the Yacc file specification for constructing an expression tree for a SIL program
 */
 
 %{
@@ -30,43 +30,47 @@
 
 %union {	struct Tnode *T;
 			}
-%start prog
-%token <T> DIGIT VAR begin end READ
-%type <T> expr stlist st
+
+%token <T> DIGIT VAR READ
+//begin end
+%type <T> expr st stlist
 %right <T> '='
 %left <T> '+' '-'
 %left <T> '*' '/'
 
 %%
-prog	:	begin stlist end
-			{	printf("\nInOrder Traversal: ");
-				inorderTrav($2);
-				printf("\n");
-				}
-		;
+//prog	:	begin stlist end
+//			{	printf("\nInOrder Traversal: ");
+//				inorderTrav($2);
+//				printf("\n");
+//				}
+//		;
 
 stlist	:	stlist st
-			{	printf("Hangover");
+			{	printf("\nPARSER: Found stlist st\n");
 				$$ = allocateNode(0,STLIST,'\0',-1);
 				$$->l = $1;
 				$$->r = $2;
 				}
 		
 		|	st
-			{	$$ = $1;printf("Hangover");
+			{	printf("\nPARSER: Found st\n");
+				$$ = $1;
 				}
 		
 		;
 
-st		:	VAR '=' expr ';'
+st		:	VAR '=' expr ';' '\n'
 			{	//store expr in symbol table array
-				$$ = $2;printf("Hangover");
+				printf("\nPARSER: Found VAR = expr;\n");
+				$$ = $2;
 				$$->l = $1;
 				$$->r = $3;
 				}
 		
-		|	READ '(' VAR ')' ';'
-			{	$$ = $1;printf("Hangover");
+		|	READ '(' VAR ')' ';' '\n'
+			{	printf("\nPARSER: Found READ (VAR);\n");
+				$$ = $1;
 				$$->l = $3;
 				}
 		
@@ -101,11 +105,12 @@ expr	:	expr '+' expr
 				}
 		
 		|	DIGIT
-			{	$$ = $1;
+			{	printf("\nPARSER: Found DIGIT\n");
+				$$ = $1;
 				}
 		
 		|	VAR
-			{	printf("\nYo\n");
+			{	printf("\nPARSER: Found VAR\n");
 				$$ = $1;
 				}
 		
@@ -116,11 +121,9 @@ expr	:	expr '+' expr
 
 int main(int argc,char *argv[])
 {
-//	yyin = fopen(argv[1],"r");
-	
+	yyin = fopen(argv[1],"r");
 	yyparse();
-	
-//	fclose(yyin);
+	fclose(yyin);
 	return 0;
 }
 

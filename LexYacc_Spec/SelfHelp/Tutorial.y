@@ -81,6 +81,10 @@ expr	:	expr '+' expr
 		|	DIGIT
 			{	strcpy($$,$1);
 				}
+
+		|	VAR
+			{	strcpy($$,$1);
+				}
 		;
 
 %%

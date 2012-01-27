@@ -5,6 +5,7 @@
 %%
 [\t ]+ ;
 
+
 [0-9]+			{	strcpy(yylval.value,yytext);
 					printf("\nThis is Dig Token %d by LEX - %s",ctr++,yylval.value);
 					return DIGIT;

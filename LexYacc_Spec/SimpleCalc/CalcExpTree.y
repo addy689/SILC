@@ -1,5 +1,5 @@
 /*
-	This file contains the Yacc file specification for implementing a simple calculator and an expression tree
+	This file contains the Yacc file specification for implementing an expression tree for a calculator
 */
 
 %{
