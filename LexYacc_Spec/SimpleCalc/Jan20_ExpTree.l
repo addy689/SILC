@@ -5,9 +5,20 @@
 %%
 [\t ]+	;
 
+BEGIN			{	return BEGN;
+					}
+
+END				{	return ED;
+					}
+
 read			{	printf("Token '%s' detected by LEX!",yytext);
 					yylval.T = allocateNode(0,RD,'\0',-1);
 					return READ;
+					}
+
+write			{	printf("Token '%s' detected by LEX!",yytext);
+					yylval.T = allocateNode(0,WRT,'\0',-1);
+					return WRITE;
 					}
 
 [a-z]			{	printf("\nAlpha token '%c' detected by LEX!",yytext[0]);
@@ -15,13 +26,12 @@ read			{	printf("Token '%s' detected by LEX!",yytext);
 					return VAR;
 					}
 
-
 [0-9]+			{	printf("\nNumber token '%c' detected by LEX!",yytext[0]);
 					yylval.T = allocateNode(atoi(yytext),NUM,'\0',-1);
 					return DIGIT;
 					}
 
-[-+*\/\(\)\n\;\=]	{	printf("\nToken '%c' detected by LEX!",yytext[0]);
+[-+*=/();\n]	{	printf("\nToken '%c' detected by LEX!",yytext[0]);
 						switch(yytext[0])
 						{
 							case '+':	yylval.T = allocateNode(0,ADD,'+',-1);

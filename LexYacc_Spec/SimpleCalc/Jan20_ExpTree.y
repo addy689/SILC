@@ -5,15 +5,16 @@
 %{
 	#include<stdio.h>
 	#include<stdlib.h>
-	#define NUM 0
 	#define ADD 1
 	#define SUB 2
 	#define MUL 3
 	#define DIV 4
 	#define ASSGN 5
-	#define VRBL 6
-	#define RD 7
-	#define STLIST 8
+	#define NUM 6
+	#define VRBL 7
+	#define RD 8
+	#define WRT 9
+	#define STLIST 10
 	
 	struct Tnode {
 			int val;
@@ -24,27 +25,29 @@
 	};
 
 	struct Tnode* allocateNode(int,int,char,int);
-	void inorderTrav(struct Tnode *);
-	void postorderTrav(struct Tnode *);
+	int ex(struct Tnode *);
+	void insertSymTable(int,int);
+	
+	int sym[26];
 %}
 
 %union {	struct Tnode *T;
 			}
 
-%token <T> DIGIT VAR READ
-//begin end
+%start prog
+%token <T> DIGIT VAR READ WRITE BEGN ED
 %type <T> expr st stlist
 %right <T> '='
 %left <T> '+' '-'
 %left <T> '*' '/'
 
 %%
-//prog	:	begin stlist end
-//			{	printf("\nInOrder Traversal: ");
-//				inorderTrav($2);
-//				printf("\n");
-//				}
-//		;
+prog	:	BEGN '\n' stlist ED '\n'
+			{	printf("\n--RUN--\n");
+				ex($3);
+				printf("\n");
+				}
+		;
 
 stlist	:	stlist st
 			{	printf("\nPARSER: Found stlist st\n");
@@ -61,19 +64,24 @@ stlist	:	stlist st
 		;
 
 st		:	VAR '=' expr ';' '\n'
-			{	//store expr in symbol table array
-				printf("\nPARSER: Found VAR = expr;\n");
+			{	printf("\nPARSER: Found VAR = expr;\n");
 				$$ = $2;
 				$$->l = $1;
 				$$->r = $3;
+				insertSymTable($1->binding,$3->val);
 				}
 		
 		|	READ '(' VAR ')' ';' '\n'
 			{	printf("\nPARSER: Found READ (VAR);\n");
 				$$ = $1;
-				$$->l = $3;
+				$$->l = $$->r = $3;
 				}
 		
+		|	WRITE '(' expr ')' ';' '\n'
+			{	printf("\nPARSER: Found WRITE (VAR);\n");
+				$$ = $1;
+				$$->l = $$->r = $3;
+				}
 		;
 
 expr	:	expr '+' expr
@@ -127,29 +135,45 @@ int main(int argc,char *argv[])
 	return 0;
 }
 
-void inorderTrav(struct Tnode *root)
+void insertSymTable(int x,int val)
 {
-	printf("\n");
-	if(root!=NULL)
-	{
-		inorderTrav(root->l);
-		
-		printf("%d",root->flag);
-		
-		inorderTrav(root->r);
-	}
+	sym[x] = val;
 }
 
-void postorderTrav(struct Tnode *root)
+int ex(struct Tnode *root)
 {
-	if(root!=NULL)
+	if(!root)
+		return 0;
+	
+	switch(root->flag)
 	{
-		postorderTrav(root->l);
-		postorderTrav(root->r);
+		case STLIST:	ex(root->l);
+						ex(root->r);
+						break;
 		
-		if(root->flag!=0)
-			printf("%c",root->op);
-		else
-			printf("%d",root->val);
+		case RD:		;
+						int b;
+						scanf("%d",&b);
+						insertSymTable((root->l)->binding,b);
+						return 0;
+		
+		case WRT:		printf("%d\n",ex(root->l));
+						return 0;
+		
+		case ASSGN:		return sym[(root->l)->binding] = ex(root->r);
+		
+		case ADD:		return ex(root->l) + ex (root->r);
+		
+		case SUB:		return ex(root->l) - ex (root->r);
+		
+		case MUL:		return ex(root->l) * ex (root->r);
+		
+		case DIV:		return ex(root->l) / ex (root->r);
+		
+		case VRBL:		return sym[root->binding];
+		
+		case NUM:		return root->val;
+		
+		default:		printf("How did flag get this value!");
 	}
 }
