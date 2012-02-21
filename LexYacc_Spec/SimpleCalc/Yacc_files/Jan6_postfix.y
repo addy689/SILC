@@ -1,5 +1,5 @@
 /*
-	This file contains the Yacc specification for obtaining POSTFIX notation of an expression
+	This file contains the Yacc specification for obtaining POSTFIX notation of an expression (without computing the expression tree).
 */
 
 %{

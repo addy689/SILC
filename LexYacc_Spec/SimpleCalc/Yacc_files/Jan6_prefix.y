@@ -1,5 +1,5 @@
 /*
-	This file contains the Yacc specification for obtaining PREFIX notation of an expression
+	This file contains the Yacc specification for obtaining PREFIX notation of an expression.(without computing the expression tree).
 */
 
 %{

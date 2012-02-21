@@ -1,5 +1,5 @@
 /*
-	This file contains the Lex specification for implementing an expression tree for a calculator
+	This file contains the Lex specification for implementing an expression tree for a calculator. The companion YACC file includes an interpreter for traversing the expression tree in POSTORDER and INORDER.
 */
 
 %{
@@ -26,8 +26,8 @@
 						default :	;
 					}
 					
-					return yytext[0];
-					}
+				return yytext[0];
+				}
 
 %%
 struct Tnode* allocateNode(int value,int flg,char optr)
