@@ -11,7 +11,7 @@
 %}
 %union { char value[300]; }
 %start list
-%token <value> DIGIT
+%token <value> DIGIT VAR
 %type <value> expr
 %left '+' '-'
 %left '*' '/'

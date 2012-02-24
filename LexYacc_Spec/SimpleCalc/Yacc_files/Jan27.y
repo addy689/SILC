@@ -3,32 +3,7 @@
 */
 
 %{
-	#include<stdio.h>
-	#include<stdlib.h>
-	#define ADD 1
-	#define SUB 2
-	#define MUL 3
-	#define DIV 4
-	#define ASSGN 5
-	#define NUM 6
-	#define VRBL 7
-	#define RD 8
-	#define WRT 9
-	#define STLIST 10
-	
-	struct Tnode {
-			int val;
-			char op;
-			int flag;
-			int binding;
-			struct Tnode *l,*r;
-	};
-
-	struct Tnode* allocateNode(int,int,char,int);
-	int ex(struct Tnode *);
-	void insertSymTable(int,int);
-	
-	int sym[26];
+	#include "../LexYacc_Spec/SimpleCalc/CalcLibrary.h"
 %}
 
 %union {	struct Tnode *T;
@@ -45,7 +20,6 @@
 prog	:	BEGN '\n' stlist ED
 			{	printf("\n--RUN--\n");
 				ex($3);
-				printf("\n");
 				}
 		;
 
@@ -68,7 +42,7 @@ st		:	VAR '=' expr ';' '\n'
 				$$ = $2;
 				$$->l = $1;
 				$$->r = $3;
-				insertSymTable($1->binding,$3->val);
+				insertSymTable($1->binding,$3->val,0);
 				}
 		
 		|	READ '(' VAR ')' ';' '\n'
@@ -135,8 +109,11 @@ int main(int argc,char *argv[])
 	return 0;
 }
 
-void insertSymTable(int x,int val)
+void insertSymTable(int x,int val,int fl)
 {
+	if(fl == RD)
+		scanf("%d",&val);
+		
 	sym[x] = val;
 }
 
@@ -151,10 +128,7 @@ int ex(struct Tnode *root)
 						ex(root->r);
 						break;
 		
-		case RD:		;
-						int b;
-						scanf("%d",&b);
-						insertSymTable((root->l)->binding,b);
+		case RD:		insertSymTable((root->l)->binding,0,RD);
 						return 0;
 		
 		case WRT:		printf("%d\n",ex(root->l));

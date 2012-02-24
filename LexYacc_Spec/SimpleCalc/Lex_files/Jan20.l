@@ -5,10 +5,13 @@
 %%
 [\t ]+	;
 
-BEGIN			{	return BEGN;
+[\n][\t \n]+	{	return '\n';
 					}
 
-END				{	return ED;
+begin			{	return BEGN;
+					}
+
+end				{	return ED;
 					}
 
 read			{	printf("Token '%s' detected by LEX!",yytext);
