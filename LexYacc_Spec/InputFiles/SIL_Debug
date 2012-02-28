@@ -1,0 +1,11 @@
+decl
+		integer a,b,c[20];
+		boolean d;
+		integer k[16],l;
+enddecl
+
+begin
+		read(a);
+		b = c[15];
+		write(a*b);
+end

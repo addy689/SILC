@@ -2,13 +2,8 @@
 
 # USING THIS FILE - 
 
-#1)
-
-#2)
-
-#3) In the terminal, make this file executable by typing (don't type the double quotes, of course) "chmod a+x MAKEFILE".
-
-#4) Then type "./MAKEFILE LexFileName InputFileName" .
+#1) In the terminal, make this file executable by typing (don't type the double quotes, of course) "chmod a+x MAKEFILE".
+#2) Then type "./MAKEFILE LexFileName InputFileName" .
 
 #---- END OF COMMENT ----
 
@@ -16,11 +11,19 @@ rm a.out
 rm "$1".tab.c
 rm lex.yy.c
 
-#flex ../LexYacc_Spec/SelfHelp/"$1".l
-#bison ../LexYacc_Spec/SelfHelp/"$1".y
-
+# Uncomment the next two lines if you want to create scanner and parser programs for the specs files in folder SimpleCalc
 #flex ../LexYacc_Spec/SimpleCalc/Lex_files/"$1".l
 #bison ../LexYacc_Spec/SimpleCalc/Yacc_files/"$1".y
 
-gcc "$1".tab.c -ll
-./a.out "$2"
+# Uncomment the next two lines if you want to create scanner and parser programs for the specs files in folder SelfHelp
+#flex ../LexYacc_Spec/SelfHelp/"$1".l
+#bison ../LexYacc_Spec/SelfHelp/"$1".y
+
+#Uncomment the following line if you wish to compile programs from JAN20 and before
+#gcc "$1".tab.c -ll
+
+#Uncomment the following line if you wish to compile programs from JAN27 and after
+#gcc ../LexYacc_Spec/SimpleCalc/CalcLibrary.h "$1".tab.c -ll
+
+#Uncomment the next line for programs Jan20 and onwards that READ FROM A FILE
+./a.out #../LexYacc_Spec/InputFiles/"$2"

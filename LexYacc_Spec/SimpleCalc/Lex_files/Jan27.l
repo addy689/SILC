@@ -8,64 +8,52 @@ letter	[A-Za-z]
 %%
 [\t ]+	;
 
-[\n][\t \n]+	{	return '\n';
-					}
+[\n][\t \n]+	return '\n';
 
-decl			{	printf("\nToken '%s' detected by LEX!",yytext);
-					return DECL; //allocate node here
-					}
+decl			return DECL;
 
-enddecl			{	printf("\nToken '%s' detected by LEX!",yytext);
-					return ENDDECL; //allocate node here
-					}
+enddecl			return ENDDECL;
 
-integer[ ]		{	printf("\nToken '%s' detected by LEX!",yytext);
-					strcpy(yylval.c,yytext);
-					return integer;  //allocate node here
-					}
+integer[ ]		return integer;
 
-boolean[ ]		{	strcpy(yylval.c,yytext);
-					return boolean;  //allocate node here
-					}
+boolean[ ]		return boolean;
 
-begin			{	return BEGN;
-					}
+begin			return BEGN;
 
-end				{	return ED;
-					}
+end				return ED;
 
 read			{	printf("Token '%s' detected by LEX!",yytext);
-					yylval.T = allocateNode(0,RD,'\0','\0');
+					yylval.T = allocateNode(0,RD,"",0,NULL,NULL,NULL);
 					return READ;
 					}
 
 write			{	printf("Token '%s' detected by LEX!",yytext);
-					yylval.T = allocateNode(0,WRT,'\0','\0');
+					yylval.T = allocateNode(0,WRT,"",0,NULL,NULL,NULL);
 					return WRITE;
 					}
 
 (_|{letter})(_|{letter}|{digit})*		{	printf("\nIdentifier '%s' detected by LEX!",yytext);
-					yylval.T = allocateNode(0,VRBL,'\0',yytext);
-					return VAR;
-					}
+											yylval.T = allocateNode(0,IDFR,yytext,0,NULL,NULL,NULL);
+											return ID;
+											}
 
 {digit}+		{	printf("\nNumber token '%c' detected by LEX!",yytext[0]);
-					yylval.T = allocateNode(atoi(yytext),NUM,'\0','\0');
+					yylval.T = allocateNode(0,NUM,"",atoi(yytext),NULL,NULL,NULL);
 					return DIGIT;
 					}
 
 [-+*=/,()\[\];\n]	{	printf("\nToken '%c' detected by LEX!",yytext[0]);
 						switch(yytext[0])
 						{
-							case '+':	yylval.T = allocateNode(0,ADD,'+','\0');
+							case '+':	yylval.T = allocateNode(0,ADD,"",0,NULL,NULL,NULL);
 										break;
-							case '-':	yylval.T = allocateNode(0,SUB,'-','\0');
+							case '-':	yylval.T = allocateNode(0,SUB,"",0,NULL,NULL,NULL);
 										break;
-							case '*':	yylval.T = allocateNode(0,MUL,'*','\0');
+							case '*':	yylval.T = allocateNode(0,MUL,"",0,NULL,NULL,NULL);
 										break;
-							case '/':	yylval.T = allocateNode(0,DIV,'/','\0');
+							case '/':	yylval.T = allocateNode(0,DIV,"",0,NULL,NULL,NULL);
 										break;
-							case '=':	yylval.T = allocateNode(0,ASSGN,'=','\0');
+							case '=':	yylval.T = allocateNode(0,ASSGN,"",0,NULL,NULL,NULL);
 										break;
 							default :	;
 						}
@@ -74,22 +62,22 @@ write			{	printf("Token '%s' detected by LEX!",yytext);
 					}
 
 %%
-struct Tnode* allocateNode(int value,int flg,char optr,char *name)
+struct Tnode* allocateNode(int TYPE,int NODETYPE,char *NAME,int VALUE,struct Tnode *Ptr1,struct Tnode *Ptr2,struct Tnode *Ptr3)
 {
 	printf("\nAllocating\n");
 	struct Tnode *N;
 	N = malloc(sizeof(struct Tnode));
 	
-	if(flg==VRBL)
-	{
-		N->Gentry = malloc(sizeof(struct Gsymbol));
-		strcpy(N->Gentry->NAME,name);
-	}
+	N->TYPE = TYPE;
+	N->NODETYPE = NODETYPE;
 	
-	N->val = value;
-	N->flag = flg;
-	N->op = optr;
-	N->l = N->r = NULL;
+	N->NAME = malloc(sizeof(char) * (strlen(NAME)+1));
+	strcpy(N->NAME,NAME);
+	N->VALUE = VALUE;
+	
+	N->Ptr1 = Ptr1;
+	N->Ptr2 = Ptr2;
+	N-> Ptr3 = Ptr3;
 	
 	return N;
 }

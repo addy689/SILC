@@ -4,10 +4,11 @@
 
 digit	[0-9]
 letter	[A-Za-z]
+
 %%
 [\t ]+	;
-[\n][\n]+		{	return '\n';
-					}
+
+[\n][\t \n]+	return '\n';
 
 decl			{	printf("\nToken '%s' detected by LEX!",yytext);
 					return DECL; //allocate node here
@@ -26,9 +27,25 @@ boolean[ ]			{	strcpy(yylval.c,yytext);
 						return boolean;  //allocate node here
 						}
 
+begin			{	return BEGN;
+					}
+
+end				{	return ED;
+					}
+
+read			{	printf("Token '%s' detected by LEX!",yytext);
+					strcpy(yylval.c,yytext);
+					return READ;
+					}
+
+write			{	printf("Token '%s' detected by LEX!",yytext);
+					strcpy(yylval.c,yytext);
+					return WRITE;
+					}
+
 (_|{letter})(_|{letter}|{digit})*		{	printf("\nIdentifier '%s' detected by LEX!",yytext);
 												strcpy(yylval.c,yytext);
-												return VR;
+												return ID;
 												}
 
 {digit}+		{	printf("\nNumber token '%s' detected by LEX!",yytext);
@@ -36,7 +53,7 @@ boolean[ ]			{	strcpy(yylval.c,yytext);
 					return DIGIT;
 					}
 
-[\;,\[\]\n]			{	printf("\nToken '%s' detected by LEX!",yytext);
+[-+*=/()\;,\[\]\n]		{	printf("\nToken '%s' detected by LEX!",yytext);
 						return *yytext;
 					}
 

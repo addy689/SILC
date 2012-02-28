@@ -9,25 +9,38 @@
 %union {	struct Tnode *T;
 			}
 
-%start prog
-%token <T> DIGIT VAR READ WRITE BEGN ED
-%type <T> expr st stlist
+%start <T> prog
+%token <T> READ WRITE DIGIT ID
+%type <T> declbody declist decl identseq body stlist st expr
 %right <T> '='
 %left <T> '+' '-'
 %left <T> '*' '/'
 
 %%
-prog	:	BEGN '\n' stlist ED
-			{	printf("\n--RUN--\n");
-				ex($3);
+prog		:	declbody '\n' body
+				{	printf("\n--RUN--\n");
+					ex($1);
+					ex($3);
+					}
+			;
+
+declbody	:	DECL '\n' stlist '\n' ENDDECL
+				{	printf("\nPARSER: Found declbody : DECL stlist ENDDECL\n");
+					$$ = $3;
+					}
+			;
+
+body	:	BEGN '\n' stlist '\n' ED
+			{	printf("\nPARSER: Found body : BEGN stlist END\n");
+				$$ = $3;
 				}
 		;
 
-stlist	:	stlist st
+stlist	:	stlist '\n' st
 			{	printf("\nPARSER: Found stlist st\n");
-				$$ = allocateNode(0,STLIST,'\0',-1);
-				$$->l = $1;
-				$$->r = $2;
+				$$ = allocateNode(0,STLIST,"",0,$1,$3,NULL);
+				$$->Ptr1 = $1;
+				$$->Ptr2 = $3;
 				}
 		
 		|	st
@@ -37,49 +50,91 @@ stlist	:	stlist st
 		
 		;
 
-st		:	VAR '=' expr ';' '\n'
-			{	printf("\nPARSER: Found VAR = expr;\n");
+st		:	ID '=' expr ';'
+			{	printf("\nPARSER: Found ID = expr;\n");
+				context_check($1);
 				$$ = $2;
-				$$->l = $1;
-				$$->r = $3;
-				insertSymTable($1->binding,$3->val,0);
+				$$->Ptr1 = $1;
+				$$->Ptr2 = $3;
+				insertSymTable($1->Gentry,$3->VALUE,ASSGN);
 				}
 		
-		|	READ '(' VAR ')' ';' '\n'
-			{	printf("\nPARSER: Found READ (VAR);\n");
+		|	READ '(' ID ')' ';'
+			{	printf("\nPARSER: Found READ (ID);\n");
+				context_check($3);
 				$$ = $1;
-				$$->l = $$->r = $3;
+				$$->Ptr1 = $$->Ptr2 = $3;
 				}
 		
-		|	WRITE '(' expr ')' ';' '\n'
-			{	printf("\nPARSER: Found WRITE (VAR);\n");
+		|	WRITE '(' expr ')' ';'
+			{	printf("\nPARSER: Found WRITE (ID);\n");
 				$$ = $1;
-				$$->l = $$->r = $3;
+				$$->Ptr1 = $$->Ptr2 = $3;
 				}
+		
+		|	integer identseq ';'
+			{	printf("\nPARSER: Found decl: integer identseq ;");
+				//Mark types of all right children of $2 as integer
+				marktype($2,INTGR);
+				$$ = $2;
+				}
+		
+		|	boolean identseq ';'
+			{	printf("\nPARSER: Found decl: integer identseq ID ;");
+				//Mark types of all right children of $2 as boolean
+				marktype($2,BOOL);
+				$$ = $2;
+				}
+		
 		;
+
+identseq	:	identseq ',' ID
+				{	printf("\nPARSER: Found identseq: identseq ID");
+					Ginstall($3->NAME,0,0,NULL);
+					$$ = allocateNode(0,IDSEQ,"",0,$1,$3,NULL);
+					}
+			
+			|	identseq ',' ID '[' DIGIT ']'
+				{	printf("\nPARSER: Found identseq: identseq ID []");
+					Ginstall($3->NAME,0,$5->VALUE,NULL);
+					$$ = allocateNode(0,IDSEQ,"",0,$1,$3,NULL);
+					}
+			
+			|	ID
+				{	printf("\nPARSER: Found identseq: ID");
+					Ginstall($1->NAME,0,0,NULL);
+					$$ = allocateNode(0,IDSEQ,"",0,$1,$1,NULL);
+					}
+			
+			|	ID '[' DIGIT ']'
+				{	printf("\nPARSER: Found ID []");
+					Ginstall($1->NAME,0,$3->VALUE,NULL);
+					$$ = allocateNode(0,IDSEQ,"",0,$1,$1,NULL);
+					}
+			;
 
 expr	:	expr '+' expr
 			{	$$ = $2;
-				$$->l = $1;
-				$$->r = $3;
+				$$->Ptr1 = $1;
+				$$->Ptr2 = $3;
 				}
 		
 		|	expr '-' expr
 			{	$$ = $2;
-				$$->l = $1;
-				$$->r = $3;
+				$$->Ptr1 = $1;
+				$$->Ptr2 = $3;
 				}
 		
 		|	expr '*' expr
 			{	$$ = $2;
-				$$->l = $1;
-				$$->r = $3;
+				$$->Ptr1 = $1;
+				$$->Ptr2 = $3;
 				}
 		
 		|	expr '/' expr
 			{	$$ = $2;
-				$$->l = $1;
-				$$->r = $3;
+				$$->Ptr1 = $1;
+				$$->Ptr2 = $3;
 				}
 		
 		|	'(' expr ')'
@@ -91,9 +146,18 @@ expr	:	expr '+' expr
 				$$ = $1;
 				}
 		
-		|	VAR
-			{	printf("\nPARSER: Found VAR\n");
+		|	ID
+			{	printf("\nPARSER: Found ID");
+				context_check($1);
 				$$ = $1;
+				}
+		
+		|	ID '[' expr ']'
+			{
+				printf("\nPARSER: Found ID []");
+				context_check($1);
+				$$ = $1;
+				$$->Ptr1 = $$->Ptr2 = $3;
 				}
 		
 		;
@@ -103,7 +167,7 @@ expr	:	expr '+' expr
 
 int main(int argc,char *argv[])
 {
-	yyin = fopen(argv[1],"r");
+	yyin = fopen(argv[1],"Ptr2");
 	yyparse();
 	fclose(yyin);
 	return 0;
@@ -113,7 +177,7 @@ void insertSymTable(int x,int val,int fl)
 {
 	if(fl == RD)
 		scanf("%d",&val);
-		
+	
 	sym[x] = val;
 }
 
@@ -122,29 +186,29 @@ int ex(struct Tnode *root)
 	if(!root)
 		return 0;
 	
-	switch(root->flag)
+	switch(root->NODETYPE)
 	{
-		case STLIST:	ex(root->l);
-						ex(root->r);
+		case STLIST:	ex(root->Ptr1);
+						ex(root->Ptr2);
 						break;
 		
-		case RD:		insertSymTable((root->l)->binding,0,RD);
+		case RD:		insertSymTable((root->Ptr1)->binding,0,RD);
 						return 0;
 		
-		case WRT:		printf("%d\n",ex(root->l));
+		case WRT:		printf("%d\n",ex(root->Ptr1));
 						return 0;
 		
-		case ASSGN:		return sym[(root->l)->binding] = ex(root->r);
+		case ASSGN:		return sym[(root->Ptr1)->binding] = ex(root->Ptr2);
 		
-		case ADD:		return ex(root->l) + ex (root->r);
+		case ADD:		return ex(root->Ptr1) + ex (root->Ptr2);
 		
-		case SUB:		return ex(root->l) - ex (root->r);
+		case SUB:		return ex(root->Ptr1) - ex (root->Ptr2);
 		
-		case MUL:		return ex(root->l) * ex (root->r);
+		case MUL:		return ex(root->Ptr1) * ex (root->Ptr2);
 		
-		case DIV:		return ex(root->l) / ex (root->r);
+		case DIV:		return ex(root->Ptr1) / ex (root->Ptr2);
 		
-		case VRBL:		return sym[root->binding];
+		case ID:		return sym[root->binding];
 		
 		case NUM:		return root->val;
 		
