@@ -74,12 +74,14 @@ expr	:	expr '+' expr
 				}
 		
 		|	'(' expr ')'
-			{	strcpy($$,$2);
+			{	printf("\nPARSER: Found (E)");
+				strcpy($$,$2);
 				}
 		
 
 		|	DIGIT
-			{	strcpy($$,$1);
+			{	printf("\nPARSER: Found DIGIT");
+				strcpy($$,$1);
 				}
 
 		|	VAR
@@ -92,5 +94,5 @@ expr	:	expr '+' expr
 int main()
 {
 	ctr=0;
-	return yyparse();
+	yyparse();
 }

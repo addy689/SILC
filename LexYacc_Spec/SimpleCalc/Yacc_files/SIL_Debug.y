@@ -11,10 +11,15 @@
 			}
 
 %start prog
-%token <c> integer boolean DECL ENDDECL DIGIT ID READ WRITE BEGN ED
+%token <c> integer boolean DECL ENDDECL DIGIT ID READ WRITE BEGN ED IF THEN ENDIF ELSE
 %type <c> declbody identseq expr st stlist body
 
+%left '>' '<'
+%right '='
+%left '+' '-'
+%left '*' '/'
 %%
+
 prog		:	declbody '\n' body
 				{	printf("\n\n--START--\n\n%s\n\n%s\n\n",$1,$3);
 					}
@@ -59,7 +64,35 @@ stlist	:	stlist '\n' st
 		
 		;
 
-st		:	ID '=' expr ';'
+st		:	IF '(' expr ')' THEN '\n' stlist '\n' ELSE '\n' stlist '\n' ENDIF ';'
+			{	printf("\nPARSER: Found IF ELSE ENDIF\n");
+				tmp[0]='\0';
+				strcat(tmp,"IF");
+				strcat(tmp,"(");
+				strcat(tmp,$3);
+				strcat(tmp,")");
+				strcat(tmp,"THEN\n");
+				strcat(tmp,$7);
+				strcat(tmp,"\nELSE\n");
+				strcat(tmp,$11);
+				strcat(tmp,"\nENDIF;");
+				strcpy($$,tmp);
+				}
+		
+		|	IF '(' expr ')' THEN '\n' stlist '\n' ENDIF ';'
+			{	printf("\nPARSER: Found IF ENDIF\n");
+				tmp[0]='\0';
+				strcat(tmp,"IF");
+				strcat(tmp,"(");
+				strcat(tmp,$3);
+				strcat(tmp,")");
+				strcat(tmp,"THEN\n");
+				strcat(tmp,$7);
+				strcat(tmp,"\nENDIF;");
+				strcpy($$,tmp);
+				}
+		
+		|	ID '=' expr ';'
 			{	printf("\nPARSER: Found ID = expr;\n");
 				tmp[0]='\0';
 				strcat(tmp,$1);
@@ -151,10 +184,18 @@ identseq	:	identseq ',' ID
 					}
 			;
 
-expr	:	expr '+' expr
+expr	:	expr '>' expr
 			{	tmp[0]='\0';
 				strcat(tmp,$1);
-				strcat(tmp,"+");
+				strcat(tmp,">");
+				strcat(tmp,$3);
+				strcpy($$,tmp);
+				}
+		|
+			expr '<' expr
+			{	tmp[0]='\0';
+				strcat(tmp,$1);
+				strcat(tmp,"<");
 				strcat(tmp,$3);
 				strcpy($$,tmp);
 				}

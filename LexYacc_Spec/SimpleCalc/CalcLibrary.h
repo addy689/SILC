@@ -6,15 +6,21 @@
 #define SUB 2
 #define MUL 3
 #define DIV 4
-#define ASSGN 5
+#define ASSIGN 5
+#define ARRAYASSIGN 13
 #define NUM 6
 #define IDFR 7
 #define RD 8
-#define WRT 9
-#define IDSEQ 10
-#define STLIST 11
-#define INTGR 12
-#define BOOL 13
+#define ARRAYRD 9
+#define WRIT 10
+#define ARRAYIDFR 11
+#define CONTINUE 12
+#define IDFRDECL 14
+#define ARRAYDECL 15
+#define INTGR 16
+#define BOOL 17
+#define DATATYPE 18
+#define DECLSTATEMENT 19
 
 struct Gsymbol {
 	char *NAME; // Name of the Identifier
@@ -26,27 +32,36 @@ struct Gsymbol {
 	
 	int VALUE;
 	
-	int BINDING; // Address of the Identifier in Memory
+	int *BINDING; // Address of the Identifier in Memory
 
 //	ArgStruct *ARGLIST; // Argument List for functions
 //	/***Argstruct must store the name and type of each argument ***/
 
 	struct Gsymbol *NEXT; // Pointer to next Symbol Table Entry */
-};
 
-struct Tnode {
+}*Ghead;
+
+
+typedef struct tnode {
 			int TYPE;
 			int NODETYPE;
 			char *NAME;
 			int VALUE;
-			struct Tnode *Ptr1,*Ptr2,*Ptr3;
-			struct Gsymbol *Gentry; // For global identifiers/functions
-	};
+			struct tnode *Ptr1,*Ptr2,*Ptr3;
+	}Tnode;
 
-struct Tnode* allocateNode(int,int,char *,int,struct Tnode *,struct Tnode *,struct Tnode *);
+Tnode *TreeCreate(int TYPE,int NODETYPE,char *NAME,int VALUE,Tnode *Ptr1,Tnode *Ptr2,Tnode *Ptr3);
 
-struct Gsymbol *Gsymlist;
-struct Gsymbol *Glookup(char *); // Look up for a global identifier
-void Ginstall(char *NAME,int TYPE,int SIZE); // Installation
+void compile(Tnode *declroot,Tnode *stroot);
+void globalInstall(Tnode *root);
+struct Gsymbol *gLookup(char *NAME); // Look up for a global identifier
+void gInstall(char *NAME,int TYPE,int SIZE); // Installation
+void gAllocate();//Allocateing memory to variables in symbol table
+struct Gsymbol *checkIdentDecl(char *NAME);
+void semanticCheck(Tnode *root);
 
-int ex(struct Tnode *);
+int ex(Tnode *root);
+
+Tnode *tempnode;
+struct Gsymbol *gtemp;
+int var,error;

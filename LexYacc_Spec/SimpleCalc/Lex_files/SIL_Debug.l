@@ -10,6 +10,22 @@ letter	[A-Za-z]
 
 [\n][\t \n]+	return '\n';
 
+if				{	printf("\nToken '%s' detected by LEX!",yytext);
+					return IF; //allocate node here
+					}
+
+then			{	printf("\nToken '%s' detected by LEX!",yytext);
+					return THEN; //allocate node here
+					}
+
+else			{	printf("\nToken '%s' detected by LEX!",yytext);
+					return ELSE; //allocate node here
+					}
+
+endif			{	printf("\nToken '%s' detected by LEX!",yytext);
+					return ENDIF; //allocate node here
+					}
+
 decl			{	printf("\nToken '%s' detected by LEX!",yytext);
 					return DECL; //allocate node here
 					}
@@ -53,7 +69,7 @@ write			{	printf("Token '%s' detected by LEX!",yytext);
 					return DIGIT;
 					}
 
-[-+*=/()\;,\[\]\n]		{	printf("\nToken '%s' detected by LEX!",yytext);
+[-+*=/()\;,\[\]\n<>]		{	printf("\nToken '%s' detected by LEX!",yytext);
 						return *yytext;
 					}
 

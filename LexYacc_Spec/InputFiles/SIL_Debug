@@ -6,6 +6,14 @@ enddecl
 
 begin
 		read(a);
-		b = c[15];
+		
+		if(a<4) then
+			b = c[15];
+			a = c;
+		else
+			read(a);
+			read(b);
+		endif;
+		
 		write(a*b);
 end

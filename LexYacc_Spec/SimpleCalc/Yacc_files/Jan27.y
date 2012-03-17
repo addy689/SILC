@@ -6,135 +6,141 @@
 	#include "../LexYacc_Spec/SimpleCalc/CalcLibrary.h"
 %}
 
-%union {	struct Tnode *T;
+%union {	struct tnode *T;
+			int intval;
+			char *id;
 			}
 
-%start <T> prog
-%token <T> READ WRITE DIGIT ID
-%type <T> declbody declist decl identseq body stlist st expr
-%right <T> '='
-%left <T> '+' '-'
-%left <T> '*' '/'
+%start prog
+%token <intval> DIGIT
+%token <id> ID
+
+%token READ WRITE BEGN END DECL ENDDECL INTEGER BOOLEAN
+%type <T> declstmnt declist type identlist identname stlist statement expr
+%right '='
+%left '+' '-'
+%left '*' '/'
 
 %%
-prog		:	declbody '\n' body
-				{	printf("\n--RUN--\n");
-					ex($1);
-					ex($3);
-					}
-			;
-
-declbody	:	DECL '\n' stlist '\n' ENDDECL
-				{	printf("\nPARSER: Found declbody : DECL stlist ENDDECL\n");
-					$$ = $3;
-					}
-			;
-
-body	:	BEGN '\n' stlist '\n' ED
-			{	printf("\nPARSER: Found body : BEGN stlist END\n");
-				$$ = $3;
+prog	:	DECL declist ENDDECL BEGN stlist END
+			{	printf("\n--RUN--\n");
+				compile($2,$5);
 				}
 		;
 
-stlist	:	stlist '\n' st
-			{	printf("\nPARSER: Found stlist st\n");
-				$$ = allocateNode(0,STLIST,"",0,$1,$3,NULL);
-				$$->Ptr1 = $1;
-				$$->Ptr2 = $3;
+declist	:	declist declstmnt
+			{	printf("\nPARSER: Found declist : declist declstmnt\n");
+				$$ = TreeCreate(0,CONTINUE,"",0,$1,$2,NULL);
 				}
 		
-		|	st
-			{	printf("\nPARSER: Found st\n");
-				$$ = $1;
+		|	declstmnt
+			{	printf("\nPARSER: Found declist : declstmnt\n");
+				$$ = TreeCreate(0,CONTINUE,"",0,$1,NULL,NULL);
+				}
+		
+		|	{	$$ = NULL;
 				}
 		
 		;
 
-st		:	ID '=' expr ';'
-			{	printf("\nPARSER: Found ID = expr;\n");
-				context_check($1);
-				$$ = $2;
-				$$->Ptr1 = $1;
-				$$->Ptr2 = $3;
-				insertSymTable($1->Gentry,$3->VALUE,ASSGN);
-				}
-		
-		|	READ '(' ID ')' ';'
-			{	printf("\nPARSER: Found READ (ID);\n");
-				context_check($3);
-				$$ = $1;
-				$$->Ptr1 = $$->Ptr2 = $3;
-				}
-		
-		|	WRITE '(' expr ')' ';'
-			{	printf("\nPARSER: Found WRITE (ID);\n");
-				$$ = $1;
-				$$->Ptr1 = $$->Ptr2 = $3;
-				}
-		
-		|	integer identseq ';'
-			{	printf("\nPARSER: Found decl: integer identseq ;");
-				//Mark types of all right children of $2 as integer
-				marktype($2,INTGR);
-				$$ = $2;
-				}
-		
-		|	boolean identseq ';'
-			{	printf("\nPARSER: Found decl: integer identseq ID ;");
-				//Mark types of all right children of $2 as boolean
-				marktype($2,BOOL);
-				$$ = $2;
-				}
-		
-		;
-
-identseq	:	identseq ',' ID
-				{	printf("\nPARSER: Found identseq: identseq ID");
-					Ginstall($3->NAME,0,0,NULL);
-					$$ = allocateNode(0,IDSEQ,"",0,$1,$3,NULL);
+declstmnt	:	type identlist ';'
+				{	printf("\nPARSER: Found declstmnt : type identlist ;\n");
+					$$ = TreeCreate(0,DECLSTATEMENT,"",0,$1,$2,NULL);
 					}
 			
-			|	identseq ',' ID '[' DIGIT ']'
-				{	printf("\nPARSER: Found identseq: identseq ID []");
-					Ginstall($3->NAME,0,$5->VALUE,NULL);
-					$$ = allocateNode(0,IDSEQ,"",0,$1,$3,NULL);
+			;
+
+type	:	INTEGER
+			{	printf("\nPARSER: Found type: INTEGER");
+				$$ = TreeCreate(INTGR,DATATYPE,"",0,NULL,NULL,NULL);
+				}
+		
+		|	BOOLEAN
+			{	printf("\nPARSER: Found type: BOOLEAN");
+				$$ = TreeCreate(BOOL,DATATYPE,"",0,NULL,NULL,NULL);
+				}
+		
+		;
+
+stlist	:	stlist statement
+			{	printf("\nPARSER: Found stlist statement\n");
+				$$ = TreeCreate(0,CONTINUE,"",0,$1,$2,NULL);
+				}
+		
+		|	statement
+			{	printf("\nPARSER: Found statement\n");
+				$$ = TreeCreate(0,CONTINUE,"",0,$1,NULL,NULL);
+				}
+		
+		|	{	$$ = NULL;
+				}
+		
+		;
+
+statement	:	ID '=' expr ';'
+				{	printf("\nPARSER: Found ID = expr;\n");
+					$$ = TreeCreate(0,ASSIGN,$1,0,$3,NULL,NULL);
+					}
+		
+			|	ID '[' expr ']' '=' expr ';'
+				{	printf("\nPARSER: Found ID[expr] = expr;\n");
+					$$ = TreeCreate(0,ARRAYASSIGN,$1,0,$3,$6,NULL);
+					}
+		
+			|	READ '(' ID ')' ';'
+				{	printf("\nPARSER: Found statement: READ (ID);\n");
+					$$ = TreeCreate(0,RD,$3,0,NULL,NULL,NULL);
+					}
+		
+			|	READ '(' ID '[' expr ']' ')' ';'
+				{	printf("\nPARSER: Found statement: READ (ID[expr]);\n");
+					$$ = TreeCreate(0,ARRAYRD,$3,0,$5,NULL,NULL);
+					}
+		
+			|	WRITE '(' expr ')' ';'
+				{	printf("\nPARSER: Found statement: WRITE (expr);\n");
+					$$ = TreeCreate(0,WRIT,"",0,$3,NULL,NULL);
+					}
+		
+			;
+
+identlist	:	identlist ',' identname
+				{	printf("\nPARSER: Found identseq: identseq identname");
+					$$ = TreeCreate(0,CONTINUE,"",0,$1,$3,NULL);
 					}
 			
-			|	ID
-				{	printf("\nPARSER: Found identseq: ID");
-					Ginstall($1->NAME,0,0,NULL);
-					$$ = allocateNode(0,IDSEQ,"",0,$1,$1,NULL);
+			|	identname
+				{	printf("\nPARSER: Found identseq: identname");
+					$$ = TreeCreate(0,CONTINUE,"",0,$1,NULL,NULL);
+					}
+			
+			;
+
+identname	:	ID
+				{	printf("\nPARSER: Found identname: ID");
+					$$ = TreeCreate(0,IDFRDECL,$1,0,NULL,NULL,NULL);
 					}
 			
 			|	ID '[' DIGIT ']'
 				{	printf("\nPARSER: Found ID []");
-					Ginstall($1->NAME,0,$3->VALUE,NULL);
-					$$ = allocateNode(0,IDSEQ,"",0,$1,$1,NULL);
+					$$ = TreeCreate(0,ARRAYDECL,$1,$3,NULL,NULL,NULL);
 					}
 			;
 
 expr	:	expr '+' expr
-			{	$$ = $2;
-				$$->Ptr1 = $1;
-				$$->Ptr2 = $3;
+			{	$$ = TreeCreate(0,ADD,"",0,$1,$3,NULL);
 				}
 		
 		|	expr '-' expr
-			{	$$ = $2;
-				$$->Ptr1 = $1;
-				$$->Ptr2 = $3;
+			{	$$ = TreeCreate(0,SUB,"",0,$1,$3,NULL);
 				}
 		
 		|	expr '*' expr
-			{	$$ = $2;
-				$$->Ptr1 = $1;
-				$$->Ptr2 = $3;
+			{	$$ = TreeCreate(0,MUL,"",0,$1,$3,NULL);
 				}
 		
 		|	expr '/' expr
-			{	$$ = $2;
-				$$->Ptr1 = $1;
-				$$->Ptr2 = $3;
+			{	$$ = TreeCreate(0,DIV,"",0,$1,$3,NULL);
 				}
 		
 		|	'(' expr ')'
@@ -143,21 +149,18 @@ expr	:	expr '+' expr
 		
 		|	DIGIT
 			{	printf("\nPARSER: Found DIGIT\n");
-				$$ = $1;
+				$$ = TreeCreate(0,NUM,"",$1,NULL,NULL,NULL);
 				}
 		
 		|	ID
 			{	printf("\nPARSER: Found ID");
-				context_check($1);
-				$$ = $1;
+				$$ = TreeCreate(0,IDFR,$1,0,NULL,NULL,NULL);
 				}
 		
 		|	ID '[' expr ']'
 			{
 				printf("\nPARSER: Found ID []");
-				context_check($1);
-				$$ = $1;
-				$$->Ptr1 = $$->Ptr2 = $3;
+				$$ = TreeCreate(0,ARRAYIDFR,$1,0,$3,NULL,NULL);
 				}
 		
 		;
@@ -167,51 +170,8 @@ expr	:	expr '+' expr
 
 int main(int argc,char *argv[])
 {
-	yyin = fopen(argv[1],"Ptr2");
+	yyin = fopen(argv[1],"r");
 	yyparse();
 	fclose(yyin);
 	return 0;
-}
-
-void insertSymTable(int x,int val,int fl)
-{
-	if(fl == RD)
-		scanf("%d",&val);
-	
-	sym[x] = val;
-}
-
-int ex(struct Tnode *root)
-{
-	if(!root)
-		return 0;
-	
-	switch(root->NODETYPE)
-	{
-		case STLIST:	ex(root->Ptr1);
-						ex(root->Ptr2);
-						break;
-		
-		case RD:		insertSymTable((root->Ptr1)->binding,0,RD);
-						return 0;
-		
-		case WRT:		printf("%d\n",ex(root->Ptr1));
-						return 0;
-		
-		case ASSGN:		return sym[(root->Ptr1)->binding] = ex(root->Ptr2);
-		
-		case ADD:		return ex(root->Ptr1) + ex (root->Ptr2);
-		
-		case SUB:		return ex(root->Ptr1) - ex (root->Ptr2);
-		
-		case MUL:		return ex(root->Ptr1) * ex (root->Ptr2);
-		
-		case DIV:		return ex(root->Ptr1) / ex (root->Ptr2);
-		
-		case ID:		return sym[root->binding];
-		
-		case NUM:		return root->val;
-		
-		default:		printf("How did flag get this value!");
-	}
 }

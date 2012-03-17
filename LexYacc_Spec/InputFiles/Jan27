@@ -1,0 +1,13 @@
+decl
+		integer x,arr[10];
+enddecl
+
+begin
+		read(x);
+		read(arr[x+1]);
+		read(arr[x+2]);
+		
+		write(x+1);
+		write(arr[x+1]);
+		write(arr[x+2]);
+end
