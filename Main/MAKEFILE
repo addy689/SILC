@@ -10,7 +10,7 @@
 rm a.out
 rm "$1".tab.c
 rm lex.yy.c
-
+rm *.o
 
 # UNCOMMENT THE NEXT TWO LINES IF YOU WANT TO CREATE SCANNER AND PARSER PROGRAMS FOR THE SPECS FILES IN FOLDER SIMPLECALC
 flex ../SILCompiler/LexYaccFiles/"$1".l
