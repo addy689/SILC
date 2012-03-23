@@ -26,10 +26,10 @@ bison ../SILCompiler/LexYaccFiles/"$1".y
 #gcc "$1".tab.c -ll
 
 # UNCOMMENT THE FOLLOWING LINES IF YOU WISH TO COMPILE PROGRAMS FROM JAN27 AND AFTER
-gcc -c ../SILCompiler/CalcLibrary.c
+gcc -c ../SILCompiler/compilerLib.c
 gcc "$1".tab.c -ll *.o
 
 
 
 # UNCOMMENT THE NEXT LINE FOR PROGRAMS JAN20 AND ONWARDS (THAT READ FROM A FILE)
-./a.out ../SILCompiler/InputFiles/"$2"
+./a.out InputFiles/"$2"

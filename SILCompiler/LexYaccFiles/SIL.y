@@ -3,7 +3,7 @@
 */
 
 %{
-	#include "../LexYacc_Spec/SimpleCalc/CalcLibrary.h"
+	#include "../SILCompiler/compilerLib.h"
 %}
 
 %union {	struct tnode *T;

@@ -1,4 +1,4 @@
-#include "CalcLibrary.h"
+#include "compilerLib.h"
 
 Tnode *TreeCreate(int TYPE,int NODETYPE,char *NAME,int VALUE,Tnode *Ptr1,Tnode *Ptr2,Tnode *Ptr3)
 {

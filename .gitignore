@@ -3,15 +3,11 @@
 *~
 
 Test/
+SelfHelp/
 
 Main/makefile
 Main/lex.yy.c
 Main/*.tab.c
-
-LexYacc_Specs/*.tab.c
-LexYacc_Specs/lex.yy.c
-LexYacc_Spec/SimpleCalc/CalcLibrary.h.gch
-
 Main/t.c
 
 *.o
