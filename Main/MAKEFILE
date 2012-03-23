@@ -13,12 +13,12 @@ rm lex.yy.c
 
 
 # UNCOMMENT THE NEXT TWO LINES IF YOU WANT TO CREATE SCANNER AND PARSER PROGRAMS FOR THE SPECS FILES IN FOLDER SIMPLECALC
-flex ../LexYacc_Spec/SimpleCalc/Lex_files/"$1".l
-bison ../LexYacc_Spec/SimpleCalc/Yacc_files/"$1".y
+flex ../SILCompiler/LexYaccFiles/"$1".l
+bison ../SILCompiler/LexYaccFiles/"$1".y
 
 # UNCOMMENT THE NEXT TWO LINES IF YOU WANT TO CREATE SCANNER AND PARSER PROGRAMS FOR THE SPECS FILES IN FOLDER SELFHELP
-#flex ../LexYacc_Spec/SelfHelp/"$1".l
-#bison ../LexYacc_Spec/SelfHelp/"$1".y
+#flex ../SelfHelp/"$1".l
+#bison ../SelfHelp/"$1".y
 
 
 
@@ -26,10 +26,10 @@ bison ../LexYacc_Spec/SimpleCalc/Yacc_files/"$1".y
 #gcc "$1".tab.c -ll
 
 # UNCOMMENT THE FOLLOWING LINES IF YOU WISH TO COMPILE PROGRAMS FROM JAN27 AND AFTER
-gcc -c ../LexYacc_Spec/SimpleCalc/CalcLibrary.c
+gcc -c ../SILCompiler/CalcLibrary.c
 gcc "$1".tab.c -ll *.o
 
 
 
 # UNCOMMENT THE NEXT LINE FOR PROGRAMS JAN20 AND ONWARDS (THAT READ FROM A FILE)
-./a.out ../LexYacc_Spec/InputFiles/"$2"
+./a.out ../SILCompiler/InputFiles/"$2"

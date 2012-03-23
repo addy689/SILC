@@ -1,5 +1,0 @@
-begin
-		read(a);
-		b = 4;
-		write(a*b);
-end
