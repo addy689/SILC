@@ -1,3 +1,0 @@
-All the Lex and Yacc files in this folder have been implemented using only a lexical analyser and parser generator (without constructing an expression tree).
-
-This is simply for beginners to get a hands-on-experience of the working of Lex and Yacc :)
