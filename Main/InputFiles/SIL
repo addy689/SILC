@@ -1,9 +1,11 @@
 decl
 		integer i,sum,n,a[15];
+		integer f(integer a,b; boolean x,y),g(integer f);
 enddecl
 
 begin
 		i=0;
+
 		sum=0;
 		
 		read(n);

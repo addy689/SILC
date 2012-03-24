@@ -153,14 +153,16 @@ void semanticCheck(Tnode *root)
 		case WRIT			:	semanticCheck(root->Ptr1);
 								break;
 		
-		case DIV			:	if(root->Ptr2->VALUE == 0)
+		case DIV			:	if(root->Ptr2->VALUE==0 && root->Ptr2->NODETYPE==NUM)
 									printf("Warning: division by zero\n");
 		
 		case ADD			:
 		
 		case SUB			:
 		
-		case MUL			:	semanticCheck(root->Ptr1);
+		case MUL			:	if(!(root->Ptr1->TYPE==INTGR && root->Ptr2->TYPE==INTGR))
+									printf("Expression ");
+								semanticCheck(root->Ptr1);
 								semanticCheck(root->Ptr2);
 								break;
 		
@@ -169,7 +171,8 @@ void semanticCheck(Tnode *root)
 								semanticCheck(root->Ptr1);
 								break;
 		
-		case ARRAYIDFR		:	if(!checkIdentDecl(root->NAME))
+		case ARRAYIDFR		:	gtemp = checkIdentDecl(root->NAME);
+								if(!gtemp)
 									error++;
 								semanticCheck(root->Ptr1);
 								break;

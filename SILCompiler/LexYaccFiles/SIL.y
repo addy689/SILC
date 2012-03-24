@@ -16,7 +16,7 @@
 %token <id> ID
 
 %token READ WRITE BEGN END DECL ENDDECL INTEGER BOOLEAN WHILE DO ENDWHILE IF THEN ELSE ENDIF TRU FALS AND OR NOT
-%type <T> declstmnt declist type identlist identname stlist statement elseStatement expr
+%type <T> declstmnt declist type identlist identname stlist statement elseStatement expr farglist farg fargidseq
 
 %right '='
 %left '+' '-'
@@ -53,18 +53,6 @@ declstmnt	:	type identlist ';'
 					}
 			
 			;
-
-type	:	INTEGER
-			{	printf("\nPARSER: Found type: INTEGER");
-				$$ = TreeCreate(INTGR,DATATYPE,"",0,NULL,NULL,NULL);
-				}
-		
-		|	BOOLEAN
-			{	printf("\nPARSER: Found type: BOOLEAN");
-				$$ = TreeCreate(BOOL,DATATYPE,"",0,NULL,NULL,NULL);
-				}
-		
-		;
 
 stlist	:	stlist statement
 			{	printf("\nPARSER: Found stlist statement\n");
@@ -148,7 +136,58 @@ identname	:	ID
 				{	printf("\nPARSER: Found ID []");
 					$$ = TreeCreate(0,ARRAYDECL,$1,$3,NULL,NULL,NULL);
 					}
+			
+			|	ID '(' farglist ')'
+				{	printf("\nRead ID (ARGLIST)");
+					}
+			
 			;
+
+farglist		:	farglist ';' farg
+				{	printf("\nRead argidlist;arg");
+					}
+			
+			|	farg
+				{	printf("\nRead arg");
+					}
+			
+			;
+
+farg		:	type fargidseq
+				{	printf("\nRead type argidlist");
+					}
+		
+			;
+
+fargidseq	:	fargidseq ',' ID
+				{	printf("\nRead argidlist,ID");
+					}
+			
+			|	fargidseq ',' ID '[' DIGIT ']'
+				{	printf("\nRead argidlist,ID");
+					}
+			
+			|	ID
+				{	printf("\nRead ID");
+					}
+			
+			|	ID '[' DIGIT ']'
+				{	printf("\nRead ID [DIGIT]");
+					}
+			
+			;
+
+type	:	INTEGER
+			{	printf("\nPARSER: Found type: INTEGER");
+				$$ = TreeCreate(INTGR,DATATYPE,"",0,NULL,NULL,NULL);
+				}
+		
+		|	BOOLEAN
+			{	printf("\nPARSER: Found type: BOOLEAN");
+				$$ = TreeCreate(BOOL,DATATYPE,"",0,NULL,NULL,NULL);
+				}
+		
+		;
 
 expr	:	expr '+' expr
 			{	$$ = TreeCreate(INTGR,ADD,"",0,$1,$3,NULL);
