@@ -190,6 +190,16 @@ int ex(Tnode *root)
 								ex(root->Ptr2);
 								break;
 		
+		case ITERATIVE		:	while(ex(root->Ptr1))
+									ex(root->Ptr2);
+								return ex(root->Ptr3);
+		
+		case CONDITIONAL	:	if(ex(root->Ptr1))
+									ex(root->Ptr2);
+								else
+									ex(root->Ptr3);
+								return;
+		
 		case ASSIGN			:	gtemp = gLookup(root->NAME);
 								*gtemp->BINDING = ex(root->Ptr1);
 								return;
@@ -211,13 +221,25 @@ int ex(Tnode *root)
 		case WRIT			:	printf("%d\n",ex(root->Ptr1));
 								return;
 		
-		case ADD			:	return ex(root->Ptr1) + ex (root->Ptr2);
+		case ADD			:	return ex(root->Ptr1) + ex(root->Ptr2);
 		
-		case SUB			:	return ex(root->Ptr1) - ex (root->Ptr2);
+		case SUB			:	return ex(root->Ptr1) - ex(root->Ptr2);
 		
-		case MUL			:	return ex(root->Ptr1) * ex (root->Ptr2);
+		case MUL			:	return ex(root->Ptr1) * ex(root->Ptr2);
 		
-		case DIV			:	return ex(root->Ptr1) / ex (root->Ptr2);
+		case DIV			:	return ex(root->Ptr1) / ex(root->Ptr2);
+		
+		case GT				:	return ex(root->Ptr1) > ex(root->Ptr2);
+		
+		case LT				:	return ex(root->Ptr1) < ex(root->Ptr2);
+		
+		case GTE			:	return ex(root->Ptr1) >= ex(root->Ptr2);
+		
+		case LTE			:	return ex(root->Ptr1) <= ex(root->Ptr2);
+		
+		case EQ				:	return ex(root->Ptr1) == ex(root->Ptr2);
+		
+		case NE				:	return ex(root->Ptr1) != ex(root->Ptr2);
 		
 		case IDFR			:	gtemp = gLookup(root->NAME);
 								return *gtemp->BINDING;

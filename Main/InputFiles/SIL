@@ -1,13 +1,26 @@
 decl
-		integer x,arr[10];
+		integer a,b,c[20];
 enddecl
 
 begin
-		read(x);
-		read(arr[x+1]);
-		read(arr[x+2]);
+		read(a);
+		c[0]=5;
+		c[1]=10;
+		c[2]=12;
 		
-		write(x+1);
-		write(arr[x+1]);
-		write(arr[x+2]);
+		if(a!=6) then
+			b = c[2];
+			a = c;
+		else 
+			read(a);
+			read(b);
+		endif;
+		
+		while(a!=8) do
+			b = b + c[1];
+			a = a + 1;
+		endwhile
+		
+		write(a);
+		write(b);
 end

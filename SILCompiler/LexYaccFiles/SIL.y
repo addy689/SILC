@@ -15,8 +15,8 @@
 %token <intval> DIGIT
 %token <id> ID
 
-%token READ WRITE BEGN END DECL ENDDECL INTEGER BOOLEAN
-%type <T> declstmnt declist type identlist identname stlist statement expr
+%token READ WRITE BEGN END DECL ENDDECL INTEGER BOOLEAN WHILE DO ENDWHILE IF THEN ELSE ENDIF
+%type <T> declstmnt declist type identlist identname stlist statement elseStatement expr
 %right '='
 %left '+' '-'
 %left '*' '/'
@@ -77,31 +77,50 @@ stlist	:	stlist statement
 		
 		;
 
-statement	:	ID '=' expr ';'
+statement	:	WHILE '(' expr ')' DO stlist ENDWHILE
+				{	printf("\nPARSER: Found WHILE DO ENDWHILE\n");
+					$$ = TreeCreate(0,ITERATIVE,"",0,$3,$6,NULL);
+					}
+			
+			|	IF '(' expr ')' THEN stlist elseStatement ENDIF ';'
+				{	printf("\nPARSER: Found IF ELSE ENDIF\n");
+					$$ = TreeCreate(0,CONDITIONAL,"",0,$3,$6,$7);
+					}
+			
+			|	ID '=' expr ';'
 				{	printf("\nPARSER: Found ID = expr;\n");
 					$$ = TreeCreate(0,ASSIGN,$1,0,$3,NULL,NULL);
 					}
-		
+			
 			|	ID '[' expr ']' '=' expr ';'
 				{	printf("\nPARSER: Found ID[expr] = expr;\n");
 					$$ = TreeCreate(0,ARRAYASSIGN,$1,0,$3,$6,NULL);
 					}
-		
+			
 			|	READ '(' ID ')' ';'
 				{	printf("\nPARSER: Found statement: READ (ID);\n");
 					$$ = TreeCreate(0,RD,$3,0,NULL,NULL,NULL);
 					}
-		
+			
 			|	READ '(' ID '[' expr ']' ')' ';'
 				{	printf("\nPARSER: Found statement: READ (ID[expr]);\n");
 					$$ = TreeCreate(0,ARRAYRD,$3,0,$5,NULL,NULL);
 					}
-		
+			
 			|	WRITE '(' expr ')' ';'
 				{	printf("\nPARSER: Found statement: WRITE (expr);\n");
 					$$ = TreeCreate(0,WRIT,"",0,$3,NULL,NULL);
 					}
-		
+			
+			;
+
+elseStatement	:	ELSE stlist 
+				{	$$ = $2;
+					}
+			
+			|	{	$$ = NULL;
+					}
+			
 			;
 
 identlist	:	identlist ',' identname
@@ -141,6 +160,30 @@ expr	:	expr '+' expr
 		
 		|	expr '/' expr
 			{	$$ = TreeCreate(0,DIV,"",0,$1,$3,NULL);
+				}
+		
+		|	expr '>' expr
+			{	$$ = TreeCreate(0,GT,"",0,$1,$3,NULL);
+				}
+		
+		|	expr '<' expr
+			{	$$ = TreeCreate(0,LT,"",0,$1,$3,NULL);
+				}
+		
+		|	expr '>' '=' expr
+			{	$$ = TreeCreate(0,GTE,"",0,$1,$4,NULL);
+				}
+		
+		|	expr '<' '=' expr
+			{	$$ = TreeCreate(0,LTE,"",0,$1,$4,NULL);
+				}
+		
+		|	expr '=' '=' expr
+			{	$$ = TreeCreate(0,EQ,"",0,$1,$4,NULL);
+				}
+		
+		|	expr '!' '=' expr
+			{	$$ = TreeCreate(0,NE,"",0,$1,$4,NULL);
 				}
 		
 		|	'(' expr ')'

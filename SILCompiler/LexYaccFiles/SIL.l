@@ -20,9 +20,21 @@ begin			return BEGN;
 
 end				return END;
 
-read			{	printf("Token '%s' detected by LEX!",yytext);
-					return READ;
-					}
+while			return WHILE;
+
+do				return DO;
+
+endwhile		return ENDWHILE;
+
+if				return IF;
+
+then			return THEN;
+
+else			return ELSE;
+
+endif			return ENDIF;
+
+read			return READ;
 
 write			{	printf("Token '%s' detected by LEX!",yytext);
 					return WRITE;
@@ -39,7 +51,7 @@ write			{	printf("Token '%s' detected by LEX!",yytext);
 					return DIGIT;
 					}
 
-[-+*=/,()\[\];]	{	printf("\nToken '%c' detected by LEX!",yytext[0]);
+[-+*=/,()\[\];><!]	{	printf("\nToken '%c' detected by LEX!",yytext[0]);
 					return yytext[0];
 					}
 

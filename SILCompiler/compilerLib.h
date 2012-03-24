@@ -6,21 +6,33 @@
 #define SUB 2
 #define MUL 3
 #define DIV 4
-#define ASSIGN 5
-#define ARRAYASSIGN 13
+#define GT 21
+#define LT 22
+#define GTE 23
+#define LTE 24
+#define EQ 25
+#define NE 26
 #define NUM 6
 #define IDFR 7
+#define ARRAYIDFR 11
+
+#define ASSIGN 5
+#define ARRAYASSIGN 13
 #define RD 8
 #define ARRAYRD 9
 #define WRIT 10
-#define ARRAYIDFR 11
+#define CONDITIONAL 20
+#define ITERATIVE 27
+
 #define CONTINUE 12
+
+#define DECLSTATEMENT 19
 #define IDFRDECL 14
 #define ARRAYDECL 15
 #define INTGR 16
 #define BOOL 17
 #define DATATYPE 18
-#define DECLSTATEMENT 19
+//28
 
 struct Gsymbol {
 	char *NAME; // Name of the Identifier
@@ -56,7 +68,7 @@ void compile(Tnode *declroot,Tnode *stroot);
 void globalInstall(Tnode *root);
 struct Gsymbol *gLookup(char *NAME); // Look up for a global identifier
 void gInstall(char *NAME,int TYPE,int SIZE); // Installation
-void gAllocate();//Allocateing memory to variables in symbol table
+void gAllocate();//Allocating memory to variables in symbol table
 struct Gsymbol *checkIdentDecl(char *NAME);
 void semanticCheck(Tnode *root);
 
