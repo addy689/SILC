@@ -40,6 +40,28 @@ write			{	printf("Token '%s' detected by LEX!",yytext);
 					return WRITE;
 					}
 
+"=="			return Eq;
+
+"!="			return NEq;
+
+"<"				return Lt;
+
+">"				return Gt;
+
+">="			return GEq;
+
+"<="			return LEq;
+
+AND				return AND;
+
+OR				return OR;
+
+NOT				return NOT;
+
+TRUE			return TRU;
+
+FALSE			return FALS;
+
 (_|{letter})(_|{letter}|{digit})*		{	printf("\nIdentifier '%s' detected by LEX!",yytext);
 											yylval.id = malloc(sizeof(char) * (strlen(yytext)+1));
 											strcpy(yylval.id,yytext);
@@ -51,9 +73,9 @@ write			{	printf("Token '%s' detected by LEX!",yytext);
 					return DIGIT;
 					}
 
-[-+*=/,()\[\];><!]	{	printf("\nToken '%c' detected by LEX!",yytext[0]);
-					return yytext[0];
-					}
+[-+*=%/,()\[\];]		{	printf("\nToken '%c' detected by LEX!",yytext[0]);
+							return yytext[0];
+							}
 
 %%
 int yyerror (void)

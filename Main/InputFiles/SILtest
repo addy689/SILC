@@ -1,19 +1,18 @@
 decl
 		integer a,b,c[20];
-		boolean d;
-		integer k[16],l;
+		boolean d,e;
 enddecl
 
 begin
 		read(a);
+		read(b);
+		d = a!=b;
+		e = a==b;
 		
-		if(a<4) then
-			b = c[15];
-			a = c;
-		else
-			read(a);
-			read(b);
+		if(d) then
+			write(a-b);
+		else if(e) then
+				write(a*b);
+			endif;
 		endif;
-		
-		write(a*b);
 end

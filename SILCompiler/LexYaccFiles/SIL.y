@@ -15,11 +15,15 @@
 %token <intval> DIGIT
 %token <id> ID
 
-%token READ WRITE BEGN END DECL ENDDECL INTEGER BOOLEAN WHILE DO ENDWHILE IF THEN ELSE ENDIF
+%token READ WRITE BEGN END DECL ENDDECL INTEGER BOOLEAN WHILE DO ENDWHILE IF THEN ELSE ENDIF TRU FALS AND OR NOT
 %type <T> declstmnt declist type identlist identname stlist statement elseStatement expr
+
 %right '='
 %left '+' '-'
+%left '%'
 %left '*' '/'
+%left AND OR Eq NEq Gt Lt GEq LEq
+%right NOT
 
 %%
 prog	:	DECL declist ENDDECL BEGN stlist END
@@ -77,7 +81,7 @@ stlist	:	stlist statement
 		
 		;
 
-statement	:	WHILE '(' expr ')' DO stlist ENDWHILE
+statement	:	WHILE '(' expr ')' DO stlist ENDWHILE ';'
 				{	printf("\nPARSER: Found WHILE DO ENDWHILE\n");
 					$$ = TreeCreate(0,ITERATIVE,"",0,$3,$6,NULL);
 					}
@@ -114,14 +118,14 @@ statement	:	WHILE '(' expr ')' DO stlist ENDWHILE
 			
 			;
 
-elseStatement	:	ELSE stlist 
-				{	$$ = $2;
-					}
+elseStatement	:	ELSE stlist
+					{	$$ = $2;
+						}
 			
-			|	{	$$ = NULL;
-					}
+				|	{	$$ = NULL;
+						}
 			
-			;
+				;
 
 identlist	:	identlist ',' identname
 				{	printf("\nPARSER: Found identseq: identseq identname");
@@ -147,43 +151,67 @@ identname	:	ID
 			;
 
 expr	:	expr '+' expr
-			{	$$ = TreeCreate(0,ADD,"",0,$1,$3,NULL);
+			{	$$ = TreeCreate(INTGR,ADD,"",0,$1,$3,NULL);
 				}
 		
 		|	expr '-' expr
-			{	$$ = TreeCreate(0,SUB,"",0,$1,$3,NULL);
+			{	$$ = TreeCreate(INTGR,SUB,"",0,$1,$3,NULL);
 				}
 		
 		|	expr '*' expr
-			{	$$ = TreeCreate(0,MUL,"",0,$1,$3,NULL);
+			{	$$ = TreeCreate(INTGR,MUL,"",0,$1,$3,NULL);
 				}
 		
 		|	expr '/' expr
-			{	$$ = TreeCreate(0,DIV,"",0,$1,$3,NULL);
+			{	$$ = TreeCreate(INTGR,DIV,"",0,$1,$3,NULL);
 				}
 		
-		|	expr '>' expr
-			{	$$ = TreeCreate(0,GT,"",0,$1,$3,NULL);
+		|	expr '%' expr
+			{	$$ = TreeCreate(INTGR,MOD,"",0,$1,$3,NULL);
 				}
 		
-		|	expr '<' expr
-			{	$$ = TreeCreate(0,LT,"",0,$1,$3,NULL);
+		|	expr Gt expr
+			{	$$ = TreeCreate(BOOL,GT,"",0,$1,$3,NULL);
 				}
 		
-		|	expr '>' '=' expr
-			{	$$ = TreeCreate(0,GTE,"",0,$1,$4,NULL);
+		|	expr Lt expr
+			{	$$ = TreeCreate(BOOL,LT,"",0,$1,$3,NULL);
 				}
 		
-		|	expr '<' '=' expr
-			{	$$ = TreeCreate(0,LTE,"",0,$1,$4,NULL);
+		|	expr GEq expr
+			{	$$ = TreeCreate(BOOL,GTE,"",0,$1,$3,NULL);
 				}
 		
-		|	expr '=' '=' expr
-			{	$$ = TreeCreate(0,EQ,"",0,$1,$4,NULL);
+		|	expr LEq expr
+			{	$$ = TreeCreate(BOOL,LTE,"",0,$1,$3,NULL);
 				}
 		
-		|	expr '!' '=' expr
-			{	$$ = TreeCreate(0,NE,"",0,$1,$4,NULL);
+		|	expr Eq expr
+			{	$$ = TreeCreate(BOOL,EQ,"",0,$1,$3,NULL);
+				}
+		
+		|	expr NEq expr
+			{	$$ = TreeCreate(BOOL,NE,"",0,$1,$3,NULL);
+				}
+		
+		|	expr AND expr
+			{	$$ = TreeCreate(BOOL,And,"",0,$1,$3,NULL);
+				}
+		
+		|	expr OR expr
+			{	$$ = TreeCreate(BOOL,Or,"",0,$1,$3,NULL);
+				}
+		
+		|	NOT expr
+			{	$$ = TreeCreate(BOOL,Not,"",0,$2,NULL,NULL);
+				}
+		
+		|	TRU
+			{	$$ = TreeCreate(BOOL,True,"",0,NULL,NULL,NULL);
+				}
+		
+		|	FALS
+			{	$$ = TreeCreate(BOOL,False,"",0,NULL,NULL,NULL);
 				}
 		
 		|	'(' expr ')'

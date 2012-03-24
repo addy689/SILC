@@ -1,26 +1,19 @@
 decl
-		integer a,b,c[20];
+		integer i,sum,n,a[15];
 enddecl
 
 begin
-		read(a);
-		c[0]=5;
-		c[1]=10;
-		c[2]=12;
+		i=0;
+		sum=0;
 		
-		if(a!=6) then
-			b = c[2];
-			a = c;
-		else 
-			read(a);
-			read(b);
+		read(n);
+		if(n<=15) then
+			while(i<n) do
+				read(a[i]);
+				sum = sum + a[i];
+				i=i+1;
+			endwhile;
 		endif;
 		
-		while(a!=8) do
-			b = b + c[1];
-			a = a + 1;
-		endwhile
-		
-		write(a);
-		write(b);
+		write(sum/n);
 end

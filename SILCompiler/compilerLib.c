@@ -229,6 +229,8 @@ int ex(Tnode *root)
 		
 		case DIV			:	return ex(root->Ptr1) / ex(root->Ptr2);
 		
+		case MOD			:	return ex(root->Ptr1) % ex(root->Ptr2);
+		
 		case GT				:	return ex(root->Ptr1) > ex(root->Ptr2);
 		
 		case LT				:	return ex(root->Ptr1) < ex(root->Ptr2);
@@ -240,6 +242,16 @@ int ex(Tnode *root)
 		case EQ				:	return ex(root->Ptr1) == ex(root->Ptr2);
 		
 		case NE				:	return ex(root->Ptr1) != ex(root->Ptr2);
+		
+		case And			:	return ex(root->Ptr1) && ex(root->Ptr2);
+		
+		case Or				:	return ex(root->Ptr1) || ex(root->Ptr2);
+		
+		case Not			:	return !ex(root->Ptr1);
+		
+		case True			:	return 1;
+		
+		case False			:	return 0;
 		
 		case IDFR			:	gtemp = gLookup(root->NAME);
 								return *gtemp->BINDING;
