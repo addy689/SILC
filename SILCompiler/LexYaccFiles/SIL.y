@@ -65,19 +65,19 @@ stlist	:	stlist statement
 		;
 
 statement	:	WHILE '(' expr ')' DO stlist ENDWHILE ';'
-				{	$$ = TreeCreate(0,ITERATIVE,"",0,$3,$6,NULL,line);
+				{	$$ = TreeCreate(0,ITERATIVE,"",0,$3,$6,NULL,$3->LINE);
 					}
 			
 			|	IF '(' expr ')' THEN stlist elseStatement ENDIF ';'
-				{	$$ = TreeCreate(0,CONDITIONAL,"",0,$3,$6,$7,line);
+				{	$$ = TreeCreate(0,CONDITIONAL,"",0,$3,$6,$7,$3->LINE);
 					}
 			
 			|	ID '=' expr ';'
-				{	$$ = TreeCreate(0,ASSIGN,$1,0,$3,NULL,NULL,line);
+				{	$$ = TreeCreate(0,ASSIGN,$1,0,$3,NULL,NULL,$3->LINE);
 					}
 			
 			|	ID '[' expr ']' '=' expr ';'
-				{	$$ = TreeCreate(0,ARRAYASSIGN,$1,0,$3,$6,NULL,line);
+				{	$$ = TreeCreate(0,ARRAYASSIGN,$1,0,$3,$6,NULL,$3->LINE);
 					}
 			
 			|	READ '(' ID ')' ';'
@@ -85,11 +85,11 @@ statement	:	WHILE '(' expr ')' DO stlist ENDWHILE ';'
 					}
 			
 			|	READ '(' ID '[' expr ']' ')' ';'
-				{	$$ = TreeCreate(0,ARRAYRD,$3,0,$5,NULL,NULL,line);
+				{	$$ = TreeCreate(0,ARRAYRD,$3,0,$5,NULL,NULL,$5->LINE);
 					}
 			
 			|	WRITE '(' expr ')' ';'
-				{	$$ = TreeCreate(0,WRIT,"",0,$3,NULL,NULL,line);
+				{	$$ = TreeCreate(0,WRIT,"",0,$3,NULL,NULL,$3->LINE);
 					}
 			
 			;
@@ -172,59 +172,59 @@ type	:	INTEGER
 		;
 
 expr	:	expr '+' expr
-			{	$$ = TreeCreate(INTGR,ADD,"",0,$1,$3,NULL,line);
+			{	$$ = TreeCreate(INTGR,ADD,"",0,$1,$3,NULL,$1->LINE);
 				}
 		
 		|	expr '-' expr
-			{	$$ = TreeCreate(INTGR,SUB,"",0,$1,$3,NULL,line);
+			{	$$ = TreeCreate(INTGR,SUB,"",0,$1,$3,NULL,$1->LINE);
 				}
 		
 		|	expr '*' expr
-			{	$$ = TreeCreate(INTGR,MUL,"",0,$1,$3,NULL,line);
+			{	$$ = TreeCreate(INTGR,MUL,"",0,$1,$3,NULL,$1->LINE);
 				}
 		
 		|	expr '/' expr
-			{	$$ = TreeCreate(INTGR,DIV,"",0,$1,$3,NULL,line);
+			{	$$ = TreeCreate(INTGR,DIV,"",0,$1,$3,NULL,$1->LINE);
 				}
 		
 		|	expr '%' expr
-			{	$$ = TreeCreate(INTGR,MOD,"",0,$1,$3,NULL,line);
+			{	$$ = TreeCreate(INTGR,MOD,"",0,$1,$3,NULL,$1->LINE);
 				}
 		
 		|	expr Gt expr
-			{	$$ = TreeCreate(BOOL,GT,"",0,$1,$3,NULL,line);
+			{	$$ = TreeCreate(BOOL,GT,"",0,$1,$3,NULL,$1->LINE);
 				}
 		
 		|	expr Lt expr
-			{	$$ = TreeCreate(BOOL,LT,"",0,$1,$3,NULL,line);
+			{	$$ = TreeCreate(BOOL,LT,"",0,$1,$3,NULL,$1->LINE);
 				}
 		
 		|	expr GEq expr
-			{	$$ = TreeCreate(BOOL,GTE,"",0,$1,$3,NULL,line);
+			{	$$ = TreeCreate(BOOL,GTE,"",0,$1,$3,NULL,$1->LINE);
 				}
 		
 		|	expr LEq expr
-			{	$$ = TreeCreate(BOOL,LTE,"",0,$1,$3,NULL,line);
+			{	$$ = TreeCreate(BOOL,LTE,"",0,$1,$3,NULL,$1->LINE);
 				}
 		
 		|	expr Eq expr
-			{	$$ = TreeCreate(BOOL,EQ,"",0,$1,$3,NULL,line);
+			{	$$ = TreeCreate(BOOL,EQ,"",0,$1,$3,NULL,$1->LINE);
 				}
 		
 		|	expr NEq expr
-			{	$$ = TreeCreate(BOOL,NE,"",0,$1,$3,NULL,line);
+			{	$$ = TreeCreate(BOOL,NE,"",0,$1,$3,NULL,$1->LINE);
 				}
 		
 		|	expr AND expr
-			{	$$ = TreeCreate(BOOL,And,"",0,$1,$3,NULL,line);
+			{	$$ = TreeCreate(BOOL,And,"",0,$1,$3,NULL,$1->LINE);
 				}
 		
 		|	expr OR expr
-			{	$$ = TreeCreate(BOOL,Or,"",0,$1,$3,NULL,line);
+			{	$$ = TreeCreate(BOOL,Or,"",0,$1,$3,NULL,$1->LINE);
 				}
 		
 		|	NOT expr
-			{	$$ = TreeCreate(BOOL,Not,"",0,$2,NULL,NULL,line);
+			{	$$ = TreeCreate(BOOL,Not,"",0,$2,NULL,NULL,$2->LINE);
 				}
 		
 		|	TRU
@@ -248,7 +248,7 @@ expr	:	expr '+' expr
 				}
 		
 		|	ID '[' expr ']'
-			{	$$ = TreeCreate(0,ARRAYIDFR,$1,0,$3,NULL,NULL,line);
+			{	$$ = TreeCreate(0,ARRAYIDFR,$1,0,$3,NULL,NULL,$3->LINE);
 				}
 		
 		;

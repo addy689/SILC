@@ -6,7 +6,8 @@ decl
 enddecl
 
 begin
-		if(n+i) then
+		if
+		(n+i) then
 			read(x);
 		else
 			write(x);
