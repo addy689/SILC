@@ -1,8 +1,7 @@
 #include "compilerLib.h"
 
-Tnode *TreeCreate(int TYPE,int NODETYPE,char *NAME,int VALUE,Tnode *Ptr1,Tnode *Ptr2,Tnode *Ptr3)
+Tnode *TreeCreate(int TYPE,int NODETYPE,char *NAME,int VALUE,Tnode *Ptr1,Tnode *Ptr2,Tnode *Ptr3,int LINE)
 {
-	printf("\nAllocating\n");
 	Tnode *N = malloc(sizeof(Tnode));
 	
 	N->TYPE = TYPE;
@@ -14,7 +13,9 @@ Tnode *TreeCreate(int TYPE,int NODETYPE,char *NAME,int VALUE,Tnode *Ptr1,Tnode *
 	
 	N->Ptr1 = Ptr1;
 	N->Ptr2 = Ptr2;
-	N-> Ptr3 = Ptr3;
+	N->Ptr3 = Ptr3;
+	
+	N->LINE = LINE;
 	
 	return N;
 }
@@ -24,7 +25,7 @@ void compile(Tnode *declroot, Tnode *stroot)
 	error = 0;
 	globalInstall(declroot);
 	semanticCheck(stroot);
-	
+	printf("\n%d",line);
 	if(error==0)
 	{
 		gAllocate();
@@ -50,7 +51,10 @@ void globalInstall(Tnode *root)
 		case IDFRDECL		:
 		
 		case ARRAYDECL		:	if(gLookup(root->NAME))
+								{
 									printf("Variable %s already declared\n",root->NAME);
+									error++;
+								}
 								else
 									gInstall(root->NAME,tempnode->TYPE,root->VALUE);
 								break;
@@ -101,84 +105,463 @@ void gAllocate()
 	}
 }
 
-struct Gsymbol *checkIdentDecl(char *NAME)
+struct Gsymbol *checkIdentDecl(char *NAME,int LINE)
 {
 	struct Gsymbol *ptr;
 	
 	ptr = gLookup(NAME);
 	if(ptr == NULL)
 	{
-		printf("%s is an undeclared identifier\n",NAME);
+		printf("\nSIL:%d: Error: %s is an undeclared identifier",LINE,NAME);
 		return NULL;
 	}
 	
 	return ptr;
 }
 
-void semanticCheck(Tnode *root)
+int semanticCheck(Tnode *root)
 {
 	if(root == NULL)
-		return;
+		return 0;
 	
 	switch(root->NODETYPE)
 	{
 		case CONTINUE		:	semanticCheck(root->Ptr1);
 								semanticCheck(root->Ptr2);
-								break;
+								return;
 		
-		case ASSIGN			:	if(!checkIdentDecl(root->NAME))
-									error++;
-								semanticCheck(root->Ptr1);
-								break;
-		
-		case ARRAYASSIGN	:	if(!checkIdentDecl(root->NAME))
-									error++;
-								semanticCheck(root->Ptr1);
+		case ITERATIVE		:	{	int t1;
+									t1 = semanticCheck(root->Ptr1);
+									
+									if(t1!=BOOL && t1!=0)
+									{
+										printf("\nSIL:%d: Error: while condition is not a logical expression",root->LINE);
+										error++;
+									}
+								}
+								
 								semanticCheck(root->Ptr2);
-								break;
+								return;
+
+		case CONDITIONAL	:	{	int t1;
+									t1 = semanticCheck(root->Ptr1);
+									
+									if(t1!=BOOL && t1!=0)
+									{
+										printf("\nSIL:%d: Error: if condition is not a logical expression",root->LINE);
+										error++;
+									}
+								}
+								
+								semanticCheck(root->Ptr2);
+								semanticCheck(root->Ptr3);
+								return;
 		
-		case RD				:
+		case ASSIGN			:	{	int flag,t1;
+									char typ1[10],typ2[10];
+									struct Gsymbol *gnode;
+									
+									gnode = checkIdentDecl(root->NAME,root->LINE);
+									if(!gnode)
+									{
+										flag = 0;
+										error++;
+									}
+								
+									t1 = semanticCheck(root->Ptr1);
+									
+									if(flag!=0)
+									{
+										if(gnode->TYPE==INTGR)
+											strcpy(typ1,"integer");
+										else if(gnode->TYPE==BOOL)
+											strcpy(typ1,"boolean");
+									
+										if(t1==INTGR)
+											strcpy(typ2,"integer");
+										else if(t1==BOOL)
+											strcpy(typ2,"boolean");
+									
+										if(t1!=gnode->TYPE && t1!=0)
+										{
+											printf("\nSIL:%d: Error: cannot assign %s value to %s variable",root->LINE,typ1,typ2);
+											error++;
+										}
+									
+										else if(gnode->SIZE>0)
+										{
+											printf("\nSIL:%d: Error: incompatible types when assigning to type %s[%d] from type %s variable",root->LINE,typ1,gnode->SIZE,typ2);
+											error++;
+										}
+									}
+								}
+								
+								return 0;
 		
-		case ARRAYRD		:	gtemp = checkIdentDecl(root->NAME);
+		case ARRAYASSIGN	:	{	int flag,t1;
+									char typ1[10],typ2[10];
+									struct Gsymbol *gnode;
+									
+									gnode = checkIdentDecl(root->NAME,root->LINE);
+									if(!gnode)
+									{
+										flag = 0;
+										error++;
+									}
+									
+									t1 = semanticCheck(root->Ptr1);
+									
+									if(t1!=INTGR && t1!=0)
+									{
+										printf("\nSIL:%d: Error: array subscript is not an integer",root->LINE);
+										error++;
+									}
+								
+									else if(gnode->SIZE==0 && t1!=0)
+									{
+										printf("\nSIL:%d: Error: subscripted value is not an array",root->LINE);
+										error ++;
+									}
+									
+									t1 = semanticCheck(root->Ptr2);
+									
+									if(flag!=0)
+									{
+										if(gnode->TYPE==INTGR)
+											strcpy(typ1,"integer");
+										else if(gnode->TYPE==BOOL)
+											strcpy(typ1,"boolean");
+							
+										if(t1==INTGR)
+											strcpy(typ2,"integer");
+										else if(t1==BOOL)
+											strcpy(typ2,"boolean");
+						
+										if(t1!=gnode->TYPE && t1!=0)
+										{
+											printf("\nSIL:%d: Error: cannot assign %s value to %s variable",root->LINE,typ1,typ2);
+											error++;
+										}
+									}
+								}
+								
+								return 0;
+		
+		case RD				:	gtemp = checkIdentDecl(root->NAME,root->LINE);
+								
 								if(!gtemp)
 									error++;
-								if(gtemp->TYPE == BOOL)
+								
+								else if(gtemp->TYPE == BOOL)
 								{
-									printf("Read operation not allowed on boolean variables\n");
+									printf("\nSIL:%d: Error: read operation is not allowed on boolean variables",root->LINE);
 									error++;
 								}
-								semanticCheck(root->Ptr1);
-								break;
+								
+								return 0;
 		
-		case WRIT			:	semanticCheck(root->Ptr1);
-								break;
-		
-		case DIV			:	if(root->Ptr2->VALUE==0 && root->Ptr2->NODETYPE==NUM)
-									printf("Warning: division by zero\n");
-		
-		case ADD			:
-		
-		case SUB			:
-		
-		case MUL			:	if(!(root->Ptr1->TYPE==INTGR && root->Ptr2->TYPE==INTGR))
-									printf("Expression ");
-								semanticCheck(root->Ptr1);
-								semanticCheck(root->Ptr2);
-								break;
-		
-		case IDFR			:	if(!checkIdentDecl(root->NAME))
-									error++;
-								semanticCheck(root->Ptr1);
-								break;
-		
-		case ARRAYIDFR		:	gtemp = checkIdentDecl(root->NAME);
+		case ARRAYRD		:	gtemp = checkIdentDecl(root->NAME,root->LINE);
+								
 								if(!gtemp)
 									error++;
-								semanticCheck(root->Ptr1);
-								break;
+								
+								else if(gtemp->TYPE == BOOL)
+								{
+									printf("\nSIL:%d: Error: read operation is not allowed on boolean variables",root->LINE);
+									error++;
+								}
+								
+								else
+								{
+									int t1;
+									t1 = semanticCheck(root->Ptr1);
+									gtemp = gLookup(root->NAME);
+									
+									if(t1!=INTGR && t1!=0)
+									{
+										printf("\nSIL:%d: Error: array subscript is not an integer",root->LINE);
+										error++;
+									}
+									
+									else if(gtemp->SIZE==0 && t1!=0)
+									{
+										printf("\nSIL:%d: Error: subscripted value is not an array",root->LINE);
+										error ++;
+									}
+								}
+								
+								return 0;
 		
-		case NUM			:	semanticCheck(root->Ptr1);
-								break;
+		case WRIT			:	{	int t1;
+									t1 = semanticCheck(root->Ptr1);
+									if(t1!=INTGR && t1!=0)
+									{
+										printf("\nSIL:%d: Error: write operation not allowed on boolean variables",root->LINE);
+										error++;
+									}
+								}
+								return 0;
+		
+		case DIV			:	if(root->Ptr2->VALUE==0 && root->Ptr2->NODETYPE==NUM)
+									printf("\nSIL:%d: Warning: division by zero",root->LINE);
+								
+								{	int t1,t2;
+									t1 = semanticCheck(root->Ptr1);
+									t2 = semanticCheck(root->Ptr2);
+								
+									if(t1==INTGR && t2==INTGR)
+										return root->TYPE;
+									
+									else if(!(t1==0 || t2==0))
+									{
+										printf("\nSIL:%d: Error: / does not support logical expressions",root->LINE);
+										error++;
+									}
+								}
+								return 0;
+		
+		case ADD			:	{	int t1,t2;
+									t1 = semanticCheck(root->Ptr1);
+									t2 = semanticCheck(root->Ptr2);
+									
+									if(t1==INTGR && t2==INTGR)
+										return root->TYPE;
+									
+									else if(!(t1==0 || t2==0))
+									{
+										printf("\nSIL:%d: Error: + does not support logical expressions",root->LINE);
+										error++;
+									}
+								}
+								return 0;
+		
+		case SUB			:	{	int t1,t2;
+									t1 = semanticCheck(root->Ptr1);
+									t2 = semanticCheck(root->Ptr2);
+
+									if(t1==INTGR && t2==INTGR)
+										return root->TYPE;
+									
+									else if(!(t1==0 || t2==0))
+									{
+										printf("\nSIL:%d: Error: - does not support logical expressions",root->LINE);
+										error++;
+									}
+								}
+								return 0;
+		
+		case MUL			:	{	int t1,t2;
+									t1 = semanticCheck(root->Ptr1);
+									t2 = semanticCheck(root->Ptr2);
+									
+									if(t1==INTGR && t2==INTGR)
+										return root->TYPE;
+									
+									else if(!(t1==0 || t2==0))
+									{
+										printf("\nSIL:%d: Error: * does not support logical expressions",root->LINE);
+										error++;
+									}
+								}
+								return 0;
+		
+		case MOD			:	{	int t1,t2;
+									t1 = semanticCheck(root->Ptr1);
+									t2 = semanticCheck(root->Ptr2);
+									
+									if(t1==INTGR && t2==INTGR)
+										return root->TYPE;
+									
+									else if(!(t1==0 || t2==0))
+									{
+										printf("\nSIL:%d: Error: %% does not support logical expressions",root->LINE);
+										error++;
+									}
+								}
+								return 0;
+		
+		case GT				:	{	int t1,t2;
+									t1 = semanticCheck(root->Ptr1);
+									t2 = semanticCheck(root->Ptr2);
+									
+									if(t1==INTGR && t2==INTGR)
+										return root->TYPE;
+									
+									else if(!(t1==0 || t2==0))
+									{
+										printf("\nSIL:%d: Error: > does not support logical expressions",root->LINE);
+										error++;
+									}
+								}
+								return 0;
+		
+		case LT				:	{	int t1,t2;
+									t1 = semanticCheck(root->Ptr1);
+									t2 = semanticCheck(root->Ptr2);
+									
+									if(t1==INTGR && t2==INTGR)
+										return root->TYPE;
+									
+									else if(!(t1==0 || t2==0))
+									{
+										printf("\nSIL:%d: Error: < does not support logical expressions",root->LINE);
+										error++;
+									}
+								}
+								return 0;
+		
+		case GTE			:	{	int t1,t2;
+									t1 = semanticCheck(root->Ptr1);
+									t2 = semanticCheck(root->Ptr2);
+									
+									if(t1==INTGR && t2==INTGR)
+										return root->TYPE;
+									
+									else if(!(t1==0 || t2==0))
+									{
+										printf("\nSIL:%d: Error: >= does not support logical expressions",root->LINE);
+										error++;
+									}
+								}
+								return 0;
+		
+		case LTE			:	{	int t1,t2;
+									t1 = semanticCheck(root->Ptr1);
+									t2 = semanticCheck(root->Ptr2);
+									
+									if(t1==INTGR && t2==INTGR)
+										return root->TYPE;
+									
+									else if(!(t1==0 || t2==0))
+									{
+										printf("\nSIL:%d: Error: <= does not support logical expressions",root->LINE);
+										error++;
+									}
+								}
+								return 0;
+		
+		case EQ				:	{	int t1,t2;
+									t1 = semanticCheck(root->Ptr1);
+									t2 = semanticCheck(root->Ptr2);
+									
+									if(t1==INTGR && t2==INTGR)
+										return root->TYPE;
+									
+									else if(!(t1==0 || t2==0))
+									{
+										printf("\nSIL:%d: Error: == does not support logical expressions",root->LINE);
+										error++;
+									}
+								}
+								return 0;
+		
+		case NE				:	{	int t1,t2;
+									t1 = semanticCheck(root->Ptr1);
+									t2 = semanticCheck(root->Ptr2);
+									
+									if(t1==INTGR && t2==INTGR)
+										return root->TYPE;
+									
+									else if(!(t1==0 || t2==0))
+									{
+										printf("\nSIL:%d: Error: != does not support logical expressions",root->LINE);
+										error++;
+									}
+								}
+								return 0;
+		
+		case And			:	{	int t1,t2;
+									t1 = semanticCheck(root->Ptr1);
+									t2 = semanticCheck(root->Ptr2);
+									
+									if(t1==BOOL && t2==BOOL)
+										return root->TYPE;
+									
+									else if(!(t1==0 || t2==0))
+									{
+										printf("\nSIL:%d: Error: AND does not support arithmetic expressions",root->LINE);
+										error++;
+									}
+								}
+								return 0;
+		
+		case Or				:	{	int t1,t2;
+									t1 = semanticCheck(root->Ptr1);
+									t2 = semanticCheck(root->Ptr2);
+									
+									if(t1==BOOL && t2==BOOL)
+										return root->TYPE;
+									
+									else if(!(t1==0 || t2==0))
+									{
+										printf("\nSIL:%d: Error: OR does not support arithmetic expressions",root->LINE);
+										error++;
+									}
+								}
+								return 0;
+		
+		case Not			:	{	int t1;
+									t1 = semanticCheck(root->Ptr1);
+									
+									if(t1==BOOL)
+										return root->TYPE;
+									
+									else if(t1!=0)
+									{
+										printf("\nSIL:%d: Error: NOT does not support arithmetic expressions",root->LINE);
+										error++;
+									}
+								}
+								return 0;
+		
+		case True			:
+		
+		case False			:	return root->TYPE;
+		
+		case IDFR			:	gtemp = checkIdentDecl(root->NAME,root->LINE);
+								
+								if(!gtemp)
+								{
+									error++;
+									return 0;
+								}
+								
+								else if(gtemp->SIZE>0)
+									error++;
+								
+								return gtemp->TYPE;
+		
+		case ARRAYIDFR		:	gtemp = checkIdentDecl(root->NAME,root->LINE);
+								
+								if(!gtemp)
+									error++;
+								
+								else
+								{
+									int t1;
+									t1 = semanticCheck(root->Ptr1);
+									gtemp = gLookup(root->NAME);
+									
+									if(t1!=INTGR && t1!=0)
+									{
+										printf("\nSIL:%d: Error: array subscript is not an integer",root->LINE);
+										error++;
+									}
+									
+									else if(gtemp->SIZE==0 && t1!=0)
+									{
+										printf("\nSIL:%d: Error: subscripted value is not an array",root->LINE);
+										error ++;
+									}
+									
+									else return gtemp->TYPE;
+								}
+								
+								return 0;
+		
+		case NUM			:	return INTGR;
+		
+		default				:	;
 	}
 }
 
@@ -275,7 +658,7 @@ int ex(Tnode *root)
 /*	char data[10];*/
 /*	int ctr = 1;*/
 
-/*	printf("\n\n---GLOBAL TABLE---\n");*/
+/*	printf("\nSIL:%d: \n---GLOBAL TABLE---\n");*/
 /*	while(ptr)*/
 /*	{*/
 /*		if(ptr->TYPE == INTGR)*/

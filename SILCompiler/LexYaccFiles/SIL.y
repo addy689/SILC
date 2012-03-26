@@ -19,27 +19,25 @@
 %type <T> declstmnt declist type identlist identname stlist statement elseStatement expr farglist farg fargidseq
 
 %right '='
+%left AND OR
+%left Eq NEq
+%left Gt Lt GEq LEq
 %left '+' '-'
-%left '%'
-%left '*' '/'
-%left AND OR Eq NEq Gt Lt GEq LEq
+%left '*' '/' '%'
 %right NOT
 
 %%
 prog	:	DECL declist ENDDECL BEGN stlist END
-			{	printf("\n--RUN--\n");
-				compile($2,$5);
+			{	compile($2,$5);
 				}
 		;
 
 declist	:	declist declstmnt
-			{	printf("\nPARSER: Found declist : declist declstmnt\n");
-				$$ = TreeCreate(0,CONTINUE,"",0,$1,$2,NULL);
+			{	$$ = TreeCreate(0,CONTINUE,"",0,$1,$2,NULL,line);
 				}
 		
 		|	declstmnt
-			{	printf("\nPARSER: Found declist : declstmnt\n");
-				$$ = TreeCreate(0,CONTINUE,"",0,$1,NULL,NULL);
+			{	$$ = TreeCreate(0,CONTINUE,"",0,$1,NULL,NULL,line);
 				}
 		
 		|	{	$$ = NULL;
@@ -48,20 +46,17 @@ declist	:	declist declstmnt
 		;
 
 declstmnt	:	type identlist ';'
-				{	printf("\nPARSER: Found declstmnt : type identlist ;\n");
-					$$ = TreeCreate(0,DECLSTATEMENT,"",0,$1,$2,NULL);
+				{	$$ = TreeCreate(0,DECLSTATEMENT,"",0,$1,$2,NULL,line);
 					}
 			
 			;
 
 stlist	:	stlist statement
-			{	printf("\nPARSER: Found stlist statement\n");
-				$$ = TreeCreate(0,CONTINUE,"",0,$1,$2,NULL);
+			{	$$ = TreeCreate(0,CONTINUE,"",0,$1,$2,NULL,line);
 				}
 		
 		|	statement
-			{	printf("\nPARSER: Found statement\n");
-				$$ = TreeCreate(0,CONTINUE,"",0,$1,NULL,NULL);
+			{	$$ = TreeCreate(0,CONTINUE,"",0,$1,NULL,NULL,line);
 				}
 		
 		|	{	$$ = NULL;
@@ -70,38 +65,31 @@ stlist	:	stlist statement
 		;
 
 statement	:	WHILE '(' expr ')' DO stlist ENDWHILE ';'
-				{	printf("\nPARSER: Found WHILE DO ENDWHILE\n");
-					$$ = TreeCreate(0,ITERATIVE,"",0,$3,$6,NULL);
+				{	$$ = TreeCreate(0,ITERATIVE,"",0,$3,$6,NULL,line);
 					}
 			
 			|	IF '(' expr ')' THEN stlist elseStatement ENDIF ';'
-				{	printf("\nPARSER: Found IF ELSE ENDIF\n");
-					$$ = TreeCreate(0,CONDITIONAL,"",0,$3,$6,$7);
+				{	$$ = TreeCreate(0,CONDITIONAL,"",0,$3,$6,$7,line);
 					}
 			
 			|	ID '=' expr ';'
-				{	printf("\nPARSER: Found ID = expr;\n");
-					$$ = TreeCreate(0,ASSIGN,$1,0,$3,NULL,NULL);
+				{	$$ = TreeCreate(0,ASSIGN,$1,0,$3,NULL,NULL,line);
 					}
 			
 			|	ID '[' expr ']' '=' expr ';'
-				{	printf("\nPARSER: Found ID[expr] = expr;\n");
-					$$ = TreeCreate(0,ARRAYASSIGN,$1,0,$3,$6,NULL);
+				{	$$ = TreeCreate(0,ARRAYASSIGN,$1,0,$3,$6,NULL,line);
 					}
 			
 			|	READ '(' ID ')' ';'
-				{	printf("\nPARSER: Found statement: READ (ID);\n");
-					$$ = TreeCreate(0,RD,$3,0,NULL,NULL,NULL);
+				{	$$ = TreeCreate(0,RD,$3,0,NULL,NULL,NULL,line);
 					}
 			
 			|	READ '(' ID '[' expr ']' ')' ';'
-				{	printf("\nPARSER: Found statement: READ (ID[expr]);\n");
-					$$ = TreeCreate(0,ARRAYRD,$3,0,$5,NULL,NULL);
+				{	$$ = TreeCreate(0,ARRAYRD,$3,0,$5,NULL,NULL,line);
 					}
 			
 			|	WRITE '(' expr ')' ';'
-				{	printf("\nPARSER: Found statement: WRITE (expr);\n");
-					$$ = TreeCreate(0,WRIT,"",0,$3,NULL,NULL);
+				{	$$ = TreeCreate(0,WRIT,"",0,$3,NULL,NULL,line);
 					}
 			
 			;
@@ -116,141 +104,135 @@ elseStatement	:	ELSE stlist
 				;
 
 identlist	:	identlist ',' identname
-				{	printf("\nPARSER: Found identseq: identseq identname");
-					$$ = TreeCreate(0,CONTINUE,"",0,$1,$3,NULL);
+				{	$$ = TreeCreate(0,CONTINUE,"",0,$1,$3,NULL,line);
 					}
 			
 			|	identname
-				{	printf("\nPARSER: Found identseq: identname");
-					$$ = TreeCreate(0,CONTINUE,"",0,$1,NULL,NULL);
+				{	$$ = TreeCreate(0,CONTINUE,"",0,$1,NULL,NULL,line);
 					}
 			
 			;
 
 identname	:	ID
-				{	printf("\nPARSER: Found identname: ID");
-					$$ = TreeCreate(0,IDFRDECL,$1,0,NULL,NULL,NULL);
+				{	$$ = TreeCreate(0,IDFRDECL,$1,0,NULL,NULL,NULL,line);
 					}
 			
 			|	ID '[' DIGIT ']'
-				{	printf("\nPARSER: Found ID []");
-					$$ = TreeCreate(0,ARRAYDECL,$1,$3,NULL,NULL,NULL);
+				{	$$ = TreeCreate(0,ARRAYDECL,$1,$3,NULL,NULL,NULL,line);
 					}
 			
 			|	ID '(' farglist ')'
-				{	printf("\nRead ID (ARGLIST)");
+				{	
 					}
 			
 			;
 
-farglist		:	farglist ';' farg
-				{	printf("\nRead argidlist;arg");
+farglist	:	farglist ';' farg
+				{	
 					}
 			
 			|	farg
-				{	printf("\nRead arg");
+				{	
 					}
 			
 			;
 
 farg		:	type fargidseq
-				{	printf("\nRead type argidlist");
+				{	
 					}
 		
 			;
 
 fargidseq	:	fargidseq ',' ID
-				{	printf("\nRead argidlist,ID");
+				{	
 					}
 			
 			|	fargidseq ',' ID '[' DIGIT ']'
-				{	printf("\nRead argidlist,ID");
+				{	
 					}
 			
 			|	ID
-				{	printf("\nRead ID");
+				{	
 					}
 			
 			|	ID '[' DIGIT ']'
-				{	printf("\nRead ID [DIGIT]");
+				{	
 					}
 			
 			;
 
 type	:	INTEGER
-			{	printf("\nPARSER: Found type: INTEGER");
-				$$ = TreeCreate(INTGR,DATATYPE,"",0,NULL,NULL,NULL);
+			{	$$ = TreeCreate(INTGR,DATATYPE,"",0,NULL,NULL,NULL,line);
 				}
 		
 		|	BOOLEAN
-			{	printf("\nPARSER: Found type: BOOLEAN");
-				$$ = TreeCreate(BOOL,DATATYPE,"",0,NULL,NULL,NULL);
+			{	$$ = TreeCreate(BOOL,DATATYPE,"",0,NULL,NULL,NULL,line);
 				}
 		
 		;
 
 expr	:	expr '+' expr
-			{	$$ = TreeCreate(INTGR,ADD,"",0,$1,$3,NULL);
+			{	$$ = TreeCreate(INTGR,ADD,"",0,$1,$3,NULL,line);
 				}
 		
 		|	expr '-' expr
-			{	$$ = TreeCreate(INTGR,SUB,"",0,$1,$3,NULL);
+			{	$$ = TreeCreate(INTGR,SUB,"",0,$1,$3,NULL,line);
 				}
 		
 		|	expr '*' expr
-			{	$$ = TreeCreate(INTGR,MUL,"",0,$1,$3,NULL);
+			{	$$ = TreeCreate(INTGR,MUL,"",0,$1,$3,NULL,line);
 				}
 		
 		|	expr '/' expr
-			{	$$ = TreeCreate(INTGR,DIV,"",0,$1,$3,NULL);
+			{	$$ = TreeCreate(INTGR,DIV,"",0,$1,$3,NULL,line);
 				}
 		
 		|	expr '%' expr
-			{	$$ = TreeCreate(INTGR,MOD,"",0,$1,$3,NULL);
+			{	$$ = TreeCreate(INTGR,MOD,"",0,$1,$3,NULL,line);
 				}
 		
 		|	expr Gt expr
-			{	$$ = TreeCreate(BOOL,GT,"",0,$1,$3,NULL);
+			{	$$ = TreeCreate(BOOL,GT,"",0,$1,$3,NULL,line);
 				}
 		
 		|	expr Lt expr
-			{	$$ = TreeCreate(BOOL,LT,"",0,$1,$3,NULL);
+			{	$$ = TreeCreate(BOOL,LT,"",0,$1,$3,NULL,line);
 				}
 		
 		|	expr GEq expr
-			{	$$ = TreeCreate(BOOL,GTE,"",0,$1,$3,NULL);
+			{	$$ = TreeCreate(BOOL,GTE,"",0,$1,$3,NULL,line);
 				}
 		
 		|	expr LEq expr
-			{	$$ = TreeCreate(BOOL,LTE,"",0,$1,$3,NULL);
+			{	$$ = TreeCreate(BOOL,LTE,"",0,$1,$3,NULL,line);
 				}
 		
 		|	expr Eq expr
-			{	$$ = TreeCreate(BOOL,EQ,"",0,$1,$3,NULL);
+			{	$$ = TreeCreate(BOOL,EQ,"",0,$1,$3,NULL,line);
 				}
 		
 		|	expr NEq expr
-			{	$$ = TreeCreate(BOOL,NE,"",0,$1,$3,NULL);
+			{	$$ = TreeCreate(BOOL,NE,"",0,$1,$3,NULL,line);
 				}
 		
 		|	expr AND expr
-			{	$$ = TreeCreate(BOOL,And,"",0,$1,$3,NULL);
+			{	$$ = TreeCreate(BOOL,And,"",0,$1,$3,NULL,line);
 				}
 		
 		|	expr OR expr
-			{	$$ = TreeCreate(BOOL,Or,"",0,$1,$3,NULL);
+			{	$$ = TreeCreate(BOOL,Or,"",0,$1,$3,NULL,line);
 				}
 		
 		|	NOT expr
-			{	$$ = TreeCreate(BOOL,Not,"",0,$2,NULL,NULL);
+			{	$$ = TreeCreate(BOOL,Not,"",0,$2,NULL,NULL,line);
 				}
 		
 		|	TRU
-			{	$$ = TreeCreate(BOOL,True,"",0,NULL,NULL,NULL);
+			{	$$ = TreeCreate(BOOL,True,"",0,NULL,NULL,NULL,line);
 				}
 		
 		|	FALS
-			{	$$ = TreeCreate(BOOL,False,"",0,NULL,NULL,NULL);
+			{	$$ = TreeCreate(BOOL,False,"",0,NULL,NULL,NULL,line);
 				}
 		
 		|	'(' expr ')'
@@ -258,19 +240,15 @@ expr	:	expr '+' expr
 				}
 		
 		|	DIGIT
-			{	printf("\nPARSER: Found DIGIT\n");
-				$$ = TreeCreate(0,NUM,"",$1,NULL,NULL,NULL);
+			{	$$ = TreeCreate(0,NUM,"",$1,NULL,NULL,NULL,line);
 				}
 		
 		|	ID
-			{	printf("\nPARSER: Found ID");
-				$$ = TreeCreate(0,IDFR,$1,0,NULL,NULL,NULL);
+			{	$$ = TreeCreate(0,IDFR,$1,0,NULL,NULL,NULL,line);
 				}
 		
 		|	ID '[' expr ']'
-			{
-				printf("\nPARSER: Found ID []");
-				$$ = TreeCreate(0,ARRAYIDFR,$1,0,$3,NULL,NULL);
+			{	$$ = TreeCreate(0,ARRAYIDFR,$1,0,$3,NULL,NULL,line);
 				}
 		
 		;
@@ -280,6 +258,7 @@ expr	:	expr '+' expr
 
 int main(int argc,char *argv[])
 {
+	line = 1;
 	yyin = fopen(argv[1],"r");
 	yyparse();
 	fclose(yyin);

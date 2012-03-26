@@ -6,7 +6,9 @@ digit	[0-9]
 letter	[A-Za-z]
 
 %%
-[\n\t ]+	;
+[\n]	line++;
+
+[\t ]+		;
 
 decl			return DECL;
 
@@ -36,9 +38,7 @@ endif			return ENDIF;
 
 read			return READ;
 
-write			{	printf("Token '%s' detected by LEX!",yytext);
-					return WRITE;
-					}
+write			return WRITE;
 
 "=="			return Eq;
 
@@ -62,19 +62,16 @@ TRUE			return TRU;
 
 FALSE			return FALS;
 
-(_|{letter})(_|{letter}|{digit})*		{	printf("\nIdentifier '%s' detected by LEX!",yytext);
-											yylval.id = malloc(sizeof(char) * (strlen(yytext)+1));
+(_|{letter})(_|{letter}|{digit})*		{	yylval.id = malloc(sizeof(char) * (strlen(yytext)+1));
 											strcpy(yylval.id,yytext);
 											return ID;
 											}
 
-{digit}+		{	printf("\nNumber token '%c' detected by LEX!",yytext[0]);
-					yylval.intval = atoi(yytext);
+{digit}+		{	yylval.intval = atoi(yytext);
 					return DIGIT;
 					}
 
-[-+*=%/,()\[\];]		{	printf("\nToken '%c' detected by LEX!",yytext[0]);
-							return yytext[0];
+[-+*=%/,()\[\];]		{	return yytext[0];
 							}
 
 %%

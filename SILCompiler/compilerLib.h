@@ -6,39 +6,38 @@
 #define SUB 2
 #define MUL 3
 #define DIV 4
-#define MOD 33
-#define GT 21
-#define LT 22
-#define GTE 23
-#define LTE 24
-#define EQ 25
-#define NE 26
-#define And 28
-#define Or 30
-#define Not 29
-#define True 31
-#define False 32
-#define NUM 6
-#define IDFR 7
-#define ARRAYIDFR 11
+#define MOD 5
+#define GT 6
+#define LT 7
+#define GTE 8
+#define LTE 9
+#define EQ 10
+#define NE 11
+#define And 12
+#define Or 13
+#define Not 14
+#define True 15
+#define False 16
+#define NUM 17
+#define IDFR 18
+#define ARRAYIDFR 19
 
-#define ASSIGN 5
-#define ARRAYASSIGN 13
-#define RD 8
-#define ARRAYRD 9
-#define WRIT 10
-#define CONDITIONAL 20
-#define ITERATIVE 27
+#define ASSIGN 20
+#define ARRAYASSIGN 21
+#define RD 22
+#define ARRAYRD 23
+#define WRIT 24
+#define CONDITIONAL 25
+#define ITERATIVE 26
 
-#define CONTINUE 12
+#define CONTINUE 27
 
-#define DECLSTATEMENT 19
-#define IDFRDECL 14
-#define ARRAYDECL 15
-#define INTGR 16
-#define BOOL 17
-#define DATATYPE 18
-//28
+#define DECLSTATEMENT 28
+#define IDFRDECL 29
+#define ARRAYDECL 30
+#define INTGR 31
+#define BOOL 32
+#define DATATYPE 33
 
 struct Gsymbol {
 	char *NAME; // Name of the Identifier
@@ -65,21 +64,22 @@ typedef struct tnode {
 			int NODETYPE;
 			char *NAME;
 			int VALUE;
+			int LINE;
 			struct tnode *Ptr1,*Ptr2,*Ptr3;
 	}Tnode;
 
-Tnode *TreeCreate(int TYPE,int NODETYPE,char *NAME,int VALUE,Tnode *Ptr1,Tnode *Ptr2,Tnode *Ptr3);
+Tnode *TreeCreate(int TYPE,int NODETYPE,char *NAME,int VALUE,Tnode *Ptr1,Tnode *Ptr2,Tnode *Ptr3,int LINE);
 
 void compile(Tnode *declroot,Tnode *stroot);
 void globalInstall(Tnode *root);
 struct Gsymbol *gLookup(char *NAME); // Look up for a global identifier
 void gInstall(char *NAME,int TYPE,int SIZE); // Installation
 void gAllocate();//Allocating memory to variables in symbol table
-struct Gsymbol *checkIdentDecl(char *NAME);
-void semanticCheck(Tnode *root);
+struct Gsymbol *checkIdentDecl(char *NAME,int LINE);
+int semanticCheck(Tnode *root);
 
 int ex(Tnode *root);
 
 Tnode *tempnode;
 struct Gsymbol *gtemp;
-int var,error;
+int var,error,line;
