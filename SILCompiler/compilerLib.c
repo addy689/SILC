@@ -1,6 +1,6 @@
 #include "compilerLib.h"
 
-Tnode *TreeCreate(int TYPE,int NODETYPE,char *NAME,int VALUE,Tnode *Ptr1,Tnode *Ptr2,Tnode *Ptr3,int LINE)
+Tnode *TreeCreate(int TYPE,int NODETYPE,char *NAME,int VALUE,Tnode *ArgList,Tnode *Ptr1,Tnode *Ptr2,Tnode *Ptr3,int LINE)
 {
 	Tnode *N = malloc(sizeof(Tnode));
 	
@@ -11,6 +11,7 @@ Tnode *TreeCreate(int TYPE,int NODETYPE,char *NAME,int VALUE,Tnode *Ptr1,Tnode *
 	strcpy(N->NAME,NAME);
 	N->VALUE = VALUE;
 	
+	N->ArgList = ArgList;
 	N->Ptr1 = Ptr1;
 	N->Ptr2 = Ptr2;
 	N->Ptr3 = Ptr3;
@@ -25,7 +26,7 @@ void compile(Tnode *declroot, Tnode *stroot)
 	error = 0;
 	globalInstall(declroot);
 	semanticCheck(stroot);
-	printf("\n%d",line);
+	printf("\n");
 	if(error==0)
 	{
 		gAllocate();
@@ -44,21 +45,69 @@ void globalInstall(Tnode *root)
 								globalInstall(root->Ptr2);
 								break;
 		
-		case DECLSTATEMENT	:	tempnode = root->Ptr1;
+		case DECLSTATEMENT	:	decnode = root->Ptr1;
 								globalInstall(root->Ptr2);
 								break;
 		
 		case IDFRDECL		:
 		
-		case ARRAYDECL		:	if(gLookup(root->NAME))
+		case ARRAYDECL		:
+		
+		case FUNCDECL		:	gtemp = gLookup(root->NAME);
+								
+								if(gtemp)
 								{
-									printf("Variable %s already declared\n",root->NAME);
+									printf("\nSIL:%d: Error: redeclaration of '%s'",root->LINE,root->NAME);
 									error++;
 								}
-								else
-									gInstall(root->NAME,tempnode->TYPE,root->VALUE);
+								
+								globalInstall(root->ArgList);
+								
+								if(!gtemp)
+									gInstall(root->NAME,decnode->TYPE,root->VALUE,Arghead);
+								
+								break;
+		
+		case ARGSTATEMENT	:	argnode = root->Ptr1;
+								globalInstall(root->Ptr2);
+								break;
+		
+		case IDARG			:	if(argLookup(root->NAME))
+								{
+									printf("\nSIL:%d: Error: redefinition of parameter '%s'",root->LINE,root->NAME);
+									error++;
+								}
+								else argInstall(root->NAME,argnode->TYPE);
 								break;
 	}
+}
+
+ArgStruct *argLookup(char *NAME)
+{
+	ArgStruct *ptr = Arghead;
+	
+	while(ptr)
+	{
+		if(!strcmp(ptr->NAME,NAME))
+			return ptr;
+		
+		ptr = ptr->NEXT;
+	}
+	
+	return NULL;
+}
+
+void argInstall(char *NAME,int TYPE)
+{
+	ArgStruct *Anode = malloc(sizeof(ArgStruct));
+	
+	Anode->NAME = malloc(sizeof(char) * (strlen(NAME)+1));
+	strcpy(Anode->NAME,NAME);
+	
+	Anode->TYPE = TYPE;
+	
+	Anode->NEXT = Arghead;
+	Arghead = Anode;
 }
 
 struct Gsymbol *gLookup(char *NAME)
@@ -76,13 +125,14 @@ struct Gsymbol *gLookup(char *NAME)
 	return NULL;
 }
 
-void gInstall(char *NAME,int TYPE,int SIZE)
+void gInstall(char *NAME,int TYPE,int SIZE,ArgStruct *ARGLIST)
 {
 	struct Gsymbol *Gnode = malloc(sizeof(struct Gsymbol));
 	
 	Gnode->NAME = malloc(sizeof(char) * (strlen(NAME)+1));
 	strcpy(Gnode->NAME,NAME);
-	
+
+	Gnode->ARGLIST = ARGLIST;
 	Gnode->TYPE = TYPE;
 	Gnode->SIZE = SIZE;
 	
@@ -112,7 +162,7 @@ struct Gsymbol *checkIdentDecl(char *NAME,int LINE)
 	ptr = gLookup(NAME);
 	if(ptr == NULL)
 	{
-		printf("\nSIL:%d: Error: %s is an undeclared identifier",LINE,NAME);
+		printf("\nSIL:%d: Error: '%s' is an undeclared identifier",LINE,NAME);
 		return NULL;
 	}
 	
