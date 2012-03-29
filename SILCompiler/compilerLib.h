@@ -43,6 +43,11 @@
 #define ARGSTATEMENT 35
 #define FUNCDECL 36
 
+#define FUNCBLOCK 37
+#define MAINBLOCK 38
+#define RET 39
+#define FUNCCALL 40
+
 typedef struct tnode {
 			int TYPE;
 			int NODETYPE;

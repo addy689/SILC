@@ -21,16 +21,18 @@ Tnode *TreeCreate(int TYPE,int NODETYPE,char *NAME,int VALUE,Tnode *ArgList,Tnod
 	return N;
 }
 
-void compile(Tnode *declroot, Tnode *stroot)
+void compile(Tnode *gdeclroot,Tnode *fdefroot,Tnode *mainroot)
 {
 	error = 0;
-	globalInstall(declroot);
-	semanticCheck(stroot);
+	globalInstall(gdeclroot);
+	funcSemanticCheck(fdefroot);
+	funcSemanticCheck(mainroot);
+	
 	printf("\n");
 	if(error==0)
 	{
 		gAllocate();
-		ex(stroot);
+		ex(fdefroot);
 	}
 }
 
@@ -57,7 +59,11 @@ void globalInstall(Tnode *root)
 								
 								if(gtemp)
 								{
-									printf("\nSIL:%d: Error: redeclaration of '%s'",root->LINE,root->NAME);
+									if(root-TYPE != gtemp->TYPE)
+										printf("\nSIL:%d: Error: conflicting types for '%s'",root->LINE,root->NAME);
+									else
+										printf("\nSIL:%d: Error: redeclaration of '%s'",root->LINE,root->NAME);
+									
 									error++;
 								}
 								
@@ -74,7 +80,11 @@ void globalInstall(Tnode *root)
 		
 		case IDARG			:	if(argLookup(root->NAME))
 								{
-									printf("\nSIL:%d: Error: redefinition of parameter '%s'",root->LINE,root->NAME);
+									if(root-TYPE != gtemp->TYPE)
+										printf("\nSIL:%d: Error: conflicting types for '%s'",root->LINE,root->NAME);
+									else
+										printf("\nSIL:%d: Error: redefinition of parameter '%s'",root->LINE,root->NAME);
+									
 									error++;
 								}
 								else argInstall(root->NAME,argnode->TYPE);
@@ -169,6 +179,44 @@ struct Gsymbol *checkIdentDecl(char *NAME,int LINE)
 	return ptr;
 }
 
+int funcSemanticCheck(Tnode *root)
+{
+	if(root == NULL)
+		return;
+	
+	switch(root->NODETYPE)
+	{
+		case CONTINUE		:	funcSemanticCheck(root->Ptr1);
+								funcSemanticCheck(root->Ptr2);
+								return;
+		
+		case FUNCBLOCK		:	{	funcTypeCheck(root);
+									localInstall(root->Ptr1);
+									semanticCheck(root->Ptr2);
+									
+									t1 = semanticCheck(root->Ptr1);
+									
+									t2 = ;
+									if(t1!=BOOL && t1!=0)
+									{
+										printf("\nSIL:%d: Error: while condition is not a logical expression",root->LINE);
+										error++;
+									}
+								}
+								
+								semanticCheck(root->Ptr2);
+								return;
+		
+		case MAINBLOCK		:	{	int t2;
+									int t1;
+
+}
+
+void funcTypeCheck(Tnode *root)
+{
+	check
+}
+
 int semanticCheck(Tnode *root)
 {
 	if(root == NULL)
@@ -207,20 +255,17 @@ int semanticCheck(Tnode *root)
 								semanticCheck(root->Ptr3);
 								return;
 		
-		case ASSIGN			:	{	int flag,t1;
+		case ASSIGN			:	{	int t1;
 									char typ1[10],typ2[10];
 									struct Gsymbol *gnode;
 									
 									gnode = checkIdentDecl(root->NAME,root->LINE);
 									if(!gnode)
-									{
-										flag = 0;
 										error++;
-									}
-								
+									
 									t1 = semanticCheck(root->Ptr1);
 									
-									if(flag!=0)
+									if(gnode)
 									{
 										if(gnode->TYPE==INTGR)
 											strcpy(typ1,"integer");
@@ -248,16 +293,13 @@ int semanticCheck(Tnode *root)
 								
 								return 0;
 		
-		case ARRAYASSIGN	:	{	int flag,t1;
+		case ARRAYASSIGN	:	{	int t1;
 									char typ1[10],typ2[10];
 									struct Gsymbol *gnode;
 									
 									gnode = checkIdentDecl(root->NAME,root->LINE);
 									if(!gnode)
-									{
-										flag = 0;
 										error++;
-									}
 									
 									t1 = semanticCheck(root->Ptr1);
 									
@@ -275,7 +317,7 @@ int semanticCheck(Tnode *root)
 									
 									t1 = semanticCheck(root->Ptr2);
 									
-									if(flag!=0)
+									if(gnode)
 									{
 										if(gnode->TYPE==INTGR)
 											strcpy(typ1,"integer");
@@ -628,7 +670,7 @@ int ex(Tnode *root)
 		
 		case ITERATIVE		:	while(ex(root->Ptr1))
 									ex(root->Ptr2);
-								return ex(root->Ptr3);
+								return;
 		
 		case CONDITIONAL	:	if(ex(root->Ptr1))
 									ex(root->Ptr2);

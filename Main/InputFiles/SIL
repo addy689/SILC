@@ -1,19 +1,30 @@
-
 decl
-		integer i,sum,n,a[15];
-		boolean x,t[1],y;
-		integer i(integer a,b; boolean x,y,a),g(integer f; boolean k,f);
+		integer x,y,z;
+		integer swap(integer a,b);
 enddecl
 
-begin
-		if (n+i) then
-			read(x);
-		else
-			write(x);
-		endif;
-		
-		while(sum/x) do
-			b[x]=x*(i + NOT sum);
-			write((i==n)==a[3]);
-		endwhile;
-end
+integer swap(integer a,b){
+	
+	decl
+		integer z;
+	enddecl
+	
+	begin
+		z=a;
+		a=b;
+		b=z;
+		return 1;
+	end
+}
+
+integer main(){
+	decl
+	
+	enddecl
+	
+	begin
+		read(x);
+		read(y);
+		return 1;
+	end
+}

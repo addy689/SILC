@@ -9,6 +9,10 @@ begin
 		d = a!=b;
 		e = a==b;
 		
+		while (a<2) do
+			a = a + 1;
+		endwhile;
+		
 		if(d) then
 			write(a-b);
 		else if(e) then
