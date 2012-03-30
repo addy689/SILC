@@ -24,6 +24,7 @@ Tnode *TreeCreate(int TYPE,int NODETYPE,char *NAME,int VALUE,Tnode *ArgList,Tnod
 void compile(Tnode *declroot, Tnode *stroot)
 {
 	error = 0;
+	loc = 0;
 	globalInstall(declroot);
 	semanticCheck(stroot);
 	printf("\n");
@@ -31,6 +32,11 @@ void compile(Tnode *declroot, Tnode *stroot)
 	{
 		gAllocate();
 		ex(stroot);
+		fp=fopen("OutputFiles/CODE","w");
+		reg_count=0;
+		labelCount = -1;
+		codeGenerate(stroot);
+		fclose(fp);
 	}
 }
 
@@ -125,8 +131,14 @@ struct Gsymbol *gLookup(char *NAME)
 	return NULL;
 }
 
+int get_loc()
+{
+	return loc++;
+}
+
 void gInstall(char *NAME,int TYPE,int SIZE,ArgStruct *ARGLIST)
 {
+	int i;
 	struct Gsymbol *Gnode = malloc(sizeof(struct Gsymbol));
 	
 	Gnode->NAME = malloc(sizeof(char) * (strlen(NAME)+1));
@@ -135,6 +147,13 @@ void gInstall(char *NAME,int TYPE,int SIZE,ArgStruct *ARGLIST)
 	Gnode->ARGLIST = ARGLIST;
 	Gnode->TYPE = TYPE;
 	Gnode->SIZE = SIZE;
+	Gnode->LOCATION = get_loc();
+	if(SIZE > 0)
+	{
+		for(i=0;i<SIZE-1;i++){
+			get_loc();
+		}
+	}
 	
 	Gnode->NEXT = Ghead;
 	Ghead = Gnode;
@@ -701,6 +720,7 @@ int ex(Tnode *root)
 	}
 }
 
+
 /*void printGlobal()*/
 /*{*/
 /*	struct Gsymbol *ptr = Ghead;*/
@@ -720,8 +740,173 @@ int ex(Tnode *root)
 /*			strcpy(data,"ARRAY");*/
 /*		else strcpy(data,"VARIABLE");*/
 /*		*/
+/*		int i=0;*/
+
+/*		int * p=BINDING;*/
+
+/*		printf("*/
+
 /*		printf("Entry %d = %s\t%s\t%s\n",ctr,ptr->NAME,typ,data);*/
 /*		ctr++;*/
 /*		ptr = ptr->NEXT;*/
 /*	}*/
 /*}*/
+
+int getreg()
+{
+	return reg_count++;
+}
+void freereg()
+{
+	reg_count--;
+}
+int getLabel() { return ++labelCount; }
+void freeLabel() { labelCount--;}
+
+int codeGenerate(Tnode *root)
+{
+	int loc,r,r1,r2;
+	int lbl1,lbl2;
+	struct Gsymbol *TEMP;
+	
+	if(root==NULL)
+		return;
+
+	switch(root->NODETYPE)
+	{
+		case CONTINUE:
+			codeGenerate(root->Ptr1);
+			codeGenerate(root->Ptr2);
+			break;
+		case RD:
+			loc = gLookup(root->NAME)->LOCATION;
+			r = getreg();
+			fprintf(fp,"IN R%d\n",r);
+			fprintf(fp,"MOV [%d] R%d\n",loc,r);
+			freereg();
+			return -1;
+		case ARRAYRD:
+			r = getreg();
+			//fprintf(fp,"\n%d\n",r);
+			fprintf(fp,"IN R%d\n",r);
+			loc = gLookup(root->NAME)->LOCATION;
+			//fprintf(fp,"\n%d\n\n",loc);
+			r1 = codeGenerate(root->Ptr1);
+			//fprintf(fp,"\n%d\n",r1);
+			r2 = getreg();
+			//fprintf(fp,"\n%d\n",r2);
+			fprintf(fp,"MOV R%d %d\n",r2,loc);
+			fprintf(fp,"ADD R%d R%d\n",r1,r2);
+			freereg();
+			fprintf(fp,"MOV [R%d] R%d\n",r1,r);
+			freereg();
+			freereg();
+			return -1;
+		case WRIT:
+			r = codeGenerate(root->Ptr1);
+			fprintf(fp,"OUT R%d\n",r);
+			freereg();
+			return -1;
+		case GT:
+			r = codeGenerate(root->Ptr1);
+			codeGenerate(root->Ptr2);
+			fprintf(fp,"GT R%d R%d\n",r,r+1);
+			freereg();
+			return r;
+		case LT:
+			r = codeGenerate(root->Ptr1);
+			codeGenerate(root->Ptr2);
+			fprintf(fp,"LT R%d R%d\n",r,r+1);
+			freereg();
+			return r;
+		case EQ:
+			r = codeGenerate(root->Ptr1);
+			codeGenerate(root->Ptr2);
+			fprintf(fp,"EQ R%d R%d\n",r,r+1);
+			freereg();
+			return r;
+		case ASSIGN:
+			
+			r=codeGenerate(root->Ptr1);
+			loc = gLookup(root->NAME)->LOCATION;
+			
+			fprintf(fp,"MOV [%d] R%d\n",loc,r);
+			freereg();
+			break;
+		case NE:
+			r = codeGenerate(root->Ptr1);
+			codeGenerate(root->Ptr2);
+			fprintf(fp,"NE R%d R%d\n",r,r+1);
+			freereg();
+			return r;
+		case NUM:	
+			r=getreg();
+			//fprintf(fp,"\t\t\n%d\n",r);
+			fprintf(fp,"MOV R%d %d \n",r,root->VALUE);return r;
+		case ADD:
+			r=codeGenerate(root->Ptr1);
+			r1=codeGenerate(root->Ptr2);
+			fprintf(fp,"ADD R%d R%d\n",r,r1);
+			freereg();
+			return r;
+		case SUB:
+			r=codeGenerate(root->Ptr1);
+			r1=codeGenerate(root->Ptr2);
+			fprintf(fp,"SUB R%d R%d\n",r,r1);
+			freereg();
+			return r;
+		case MUL:
+			r=codeGenerate(root->Ptr1);
+			r1=codeGenerate(root->Ptr2);
+			fprintf(fp,"MUL R%d R%d\n",r,r1);
+			freereg();
+			return r;
+		case DIV:
+			r=codeGenerate(root->Ptr1);
+			r1=codeGenerate(root->Ptr2);
+			fprintf(fp,"DIV R%d R%d\n",r,r1);
+			freereg();
+			return r;
+		case IDFR:
+			r=getreg();
+
+			loc = gLookup(root->NAME)->LOCATION;
+//			fprintf(fp,"\n%d\n%dsau\n\n\n",r,loc);
+			fprintf(fp,"MOV R%d [%d]\n",r,loc);
+			return r;
+		case ARRAYIDFR:
+			r = codeGenerate(root->Ptr1);
+			
+			loc = gLookup(root->NAME)->LOCATION;
+			r1 = getreg();
+			
+			fprintf(fp,"MOV R%d %d\n",r1,loc);
+			fprintf(fp,"ADD R%d R%d\n",r,r1);
+			fprintf(fp,"MOV R%d [R%d]\n",r1,r);
+			freereg();
+			
+			//fprintf(fp,"\t\n%d\n",r1);
+			return r1;
+		case CONDITIONAL:
+			r = codeGenerate(root->Ptr1);
+			lbl1 = getLabel();
+			lbl2 = getLabel();
+			fprintf(fp,"JZ R%d Label%d\n",r,lbl1);
+			freereg();
+			codeGenerate(root->Ptr2);
+			fprintf(fp,"JMP Label%d\n",lbl2);
+			fprintf(fp,"Label%d:\n",lbl1);
+			codeGenerate(root->Ptr3);
+			fprintf(fp,"Label%d:\n",lbl2);
+		case ITERATIVE:
+			lbl1 = getLabel();
+			lbl2 = getLabel();
+			fprintf(fp,"Label%d:\n",lbl1);
+			r = codeGenerate(root ->Ptr1);
+			fprintf(fp,"JZ R%d Label%d\n",r,lbl2);
+			freereg();
+			codeGenerate(root ->Ptr2);
+			fprintf(fp,"JMP Label%d\n",lbl1);
+			fprintf(fp,"Label%d:\n",lbl2);
+	}
+}

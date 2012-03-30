@@ -1,19 +1,12 @@
 
 decl
-		integer i,sum,n,a[15];
-		boolean x,t[1],y;
-		integer i(integer a,b; boolean x,y,a),g(integer f; boolean k,f);
+		integer i,sum,n,a[15],j;
 enddecl
 
 begin
-		if (n+i) then
-			read(x);
-		else
-			write(x);
-		endif;
-		
-		while(sum/x) do
-			b[x]=x*(i + NOT sum);
-			write((i==n)==a[3]);
-		endwhile;
+		read(n);
+		read(j);
+		i=n+j*j;
+		write(i);
 end
+

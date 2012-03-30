@@ -31,6 +31,8 @@
 %%
 prog	:	DECL declist ENDDECL BEGN stlist END
 			{	compile($2,$5);
+				//fp=fopen("code","w");
+				//codeGenerate($5);
 				}
 		;
 

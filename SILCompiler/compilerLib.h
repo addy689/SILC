@@ -69,7 +69,7 @@ struct Gsymbol {
 	
 	int SIZE; // Size field for arrays
 	
-	int VALUE;
+	int LOCATION;
 	
 	int *BINDING; // Address of the Identifier in Memory
 
@@ -98,3 +98,9 @@ Tnode *decnode,*argnode;
 struct Gsymbol *gtemp;
 ArgStruct *Arghead;
 int var,error,line;
+int loc;
+int reg_count;
+int labelCount;
+int getLabel();
+void freeLabel();
+FILE *fp;
