@@ -99,7 +99,7 @@ FdefList	:	FdefList Fdef
 			;
 
 Fdef		:	Type ID '(' ArgList ')' '{' LDefblock Body '}'
-				{	$$ = TreeCreate(0,FUNCBLOCK,$2,0,$4,$1,$7,$8,$1->LINE);
+				{	$$ = TreeCreate(0,FUNCBLOCK,$2,-1,$4,$1,$7,$8,$1->LINE);
 					}
 			;
 
@@ -146,11 +146,7 @@ LIdList		:	LIdList ',' LId
 LId			:	ID
 				{	$$ = TreeCreate(0,IDFRDECL,$1,0,NULL,NULL,NULL,NULL,line);
 					}
-		
-			|	ID '[' CONST ']'
-				{	$$ = TreeCreate(0,ARRAYDECL,$1,$3,NULL,NULL,NULL,NULL,line);
-					}
-		
+			
 			;
 
 ArgList		:	ArgList ';' ArgDecl

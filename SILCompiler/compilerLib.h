@@ -62,42 +62,56 @@ typedef struct tnode {
 typedef struct argstruct {
 		char *NAME;
 		int TYPE;
+		int FLAG;
 		struct argstruct *NEXT;
 	}ArgStruct;
 
-
+//Node structure for Global Symbol Table
 struct Gsymbol {
-	char *NAME; // Name of the Identifier
-
-	int TYPE; // TYPE can be INTEGER or BOOLEAN
-	/***The TYPE field must be a TypeStruct if user defined types are allowed***/
-	
-	int SIZE; // Size field for arrays
-	
-	int VALUE;
-	
-	int *BINDING; // Address of the Identifier in Memory
-
-	ArgStruct *ARGLIST; // Argument List for functions
-//	/***Argstruct must store the name and type of each argument ***/
-
-	struct Gsymbol *NEXT; // Pointer to next Symbol Table Entry */
-
+	char *NAME;				//Name of the Identifier
+	int TYPE;				//TYPE can be INTEGER or BOOLEAN
+	int SIZE;				//Size field for arrays
+	int *BINDING;			//Address of the Identifier in Memory
+	ArgStruct *ARGLIST;		//Argument List for functions
+	struct Gsymbol *NEXT;	//Pointer to next Symbol Table Entry
 }*Ghead;
+
+//Node structure for Local Symbol Table
+struct Lsymbol {
+	char *NAME;				//Name of the Identifier
+	int TYPE;				//TYPE can be INTEGER or BOOLEAN
+	int *BINDING;			//Address of the Identifier in Memory
+	struct Lsymbol *NEXT;	//Pointer to next Symbol Table Entry
+}*Lhead;
 
 Tnode *TreeCreate(int TYPE,int NODETYPE,char *NAME,int VALUE,Tnode *ArgList,Tnode *Ptr1,Tnode *Ptr2,Tnode *Ptr3,int LINE);
 
-void compile(Tnode *declroot,Tnode *stroot);
-ArgStruct *argLookup(char *NAME);
-void argInstall(char *NAME,int TYPE);
-void globalInstall(Tnode *root);
-struct Gsymbol *gLookup(char *NAME); // Look up for a global identifier
-void gInstall(char *NAME,int TYPE,int SIZE,ArgStruct *ARGLIST); // Installation
-void gAllocate();//Allocating memory to variables in symbol table
-struct Gsymbol *checkIdentDecl(char *NAME,int LINE);
-int semanticCheck(Tnode *root);
+void compile(Tnode *gdeclroot,Tnode *fdefroot,Tnode *mainroot);
 
-int ex(Tnode *root);
+void globalInstall(Tnode *root);
+
+int funcSemanticCheck(Tnode *root);
+void argLocalInstall(Tnode *root,struct Lsymbol **Lhead);
+int funcTypeCheck(Tnode *root);
+int funcArgCheck(Tnode *root);
+void checkFuncDecl(int LINE);
+void localInstall(Tnode *root,struct Lsymbol **Lhead);
+int bodySemanticCheck(Tnode *root,struct Lsymbol **Lhead);
+
+ArgStruct *argLookup(char *NAME,ArgStruct *HEAD);
+void argInstall(char *NAME,int TYPE);
+
+struct Gsymbol *Glookup(char *NAME);	//Look up for a global identifier
+void Ginstall(char *NAME,int TYPE,int SIZE,ArgStruct *ARGLIST); // Installation
+void gAllocate();	//Allocating memory to variables in symbol table
+
+struct Lsymbol *Llookup(char *NAME,struct Lsymbol **Lhead);
+void Linstall(char* NAME, int TYPE,struct Lsymbol **Lhead);
+
+int ex(Tnode *root,struct Lsymbol **Lhead);
+
+void helplocal(Tnode *root,struct Lsymbol *lnode,int t1);
+void helpglobal(Tnode *root,struct Gsymbol *gnode,int t1);
 
 Tnode *decnode,*argnode;
 struct Gsymbol *gtemp;
