@@ -112,6 +112,7 @@ int ex(Tnode *root,struct Lsymbol **Lhead);
 
 void helplocal(Tnode *root,struct Lsymbol *lnode,int t1);
 void helpglobal(Tnode *root,struct Gsymbol *gnode,int t1);
+void printGlobal(struct Lsymbol **HEAD);
 
 Tnode *decnode,*argnode;
 struct Gsymbol *gtemp;

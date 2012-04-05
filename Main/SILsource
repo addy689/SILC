@@ -4,13 +4,12 @@ decl
 enddecl
 
 integer swap(integer a,b){
-	
 	decl
-		integer z;
+		boolean k;
 	enddecl
 	
 	begin
-		z=a;
+		x[k]=k[k];
 		a=b;
 		b=z;
 		return 1;
@@ -19,12 +18,14 @@ integer swap(integer a,b){
 
 integer main(){
 	decl
-	
+	integer s;
 	enddecl
 	
 	begin
 		read(x);
 		read(y);
+		write(x);
+		write(y);
 		return 1;
 	end
 }

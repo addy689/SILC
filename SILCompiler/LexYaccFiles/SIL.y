@@ -33,8 +33,7 @@
 
 %%
 Prog		:	GDefblock FdefList Mainblock
-				{	printf("DONE Baby");
-					compile($1,$2,$3);
+				{	compile($1,$2,$3);
 					}
 			
 			;
@@ -83,7 +82,7 @@ GId			:	ID
 						}
 			
 			|	ID '(' ArgList ')'
-				{	$$ = TreeCreate(0,FUNCDECL,$1,0,$3,NULL,NULL,NULL,line);
+				{	$$ = TreeCreate(0,FUNCDECL,$1,-1,$3,NULL,NULL,NULL,line);
 					}
 			
 			;

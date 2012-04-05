@@ -14,8 +14,8 @@ Main/t.c
 */*.o
 */*/*.o
 
-*/a.out
-*/*/a.out
+*/*.out
+*/*/*.out
 
-*/test.c
-*/*/test.c
+*/test
+*/*/test
