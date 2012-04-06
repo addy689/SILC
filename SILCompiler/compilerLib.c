@@ -100,6 +100,7 @@ void globalInstall(Tnode *root)
 								break;
 		
 		case ARGSTATEMENT	:	argnode = root->Ptr1;
+								entry = 1;
 								globalInstall(root->Ptr2);
 								break;
 		
@@ -142,11 +143,13 @@ int funcSemanticCheck(Tnode *root)
 								
 //checks if the function has a global declaration, and checks the function return type. Also checks if the function is a redeclaration
 								gtemp = Glookup(root->NAME);
+								functype = root->Ptr1->TYPE;
+								
 								funcTypeCheck(root);
 								
 								if(gtemp)
 								{
-//checks the names and types of arguments with the global declaration of function arguments
+									//checks the names and types of arguments with the global declaration of function arguments
 									funcArgCheck(root->ArgList);
 									
 									arg = gtemp->ARGLIST;
@@ -167,7 +170,8 @@ int funcSemanticCheck(Tnode *root)
 								
 								return;
 		
-		case MAINBLOCK		:	localInstall(root->Ptr1,&Lhead);
+		case MAINBLOCK		:	functype = root->TYPE;
+								localInstall(root->Ptr1,&Lhead);
 								bodySemanticCheck(root->Ptr2,&Lhead);
 								
 								return;
@@ -227,14 +231,14 @@ int funcTypeCheck(Tnode *root)
 	
 	else if(gtemp->SIZE == -1)
 	{
-		if(root->Ptr1->TYPE != gtemp->TYPE)
+		if(functype != gtemp->TYPE)
 		{
 			if(gtemp->TYPE == INTGR)
 				strcpy(typ,"integer");
 			else if(gtemp->TYPE == BOOL)
 				strcpy(typ,"boolean");
 
-			printf("\nSIL:%d: Error: function '%s' return type has been declared as %s in its global declaration",root->LINE,root->NAME,typ);
+			printf("\nSIL:%d: Error: function '%s' return type has been declared as '%s' in its global declaration",root->LINE,root->NAME,typ);
 			error++;
 		}
 		
@@ -243,7 +247,7 @@ int funcTypeCheck(Tnode *root)
 	
 	else if(gtemp->SIZE == -2)
 	{
-		if(root->Ptr1->TYPE != gtemp->TYPE)
+		if(functype != gtemp->TYPE)
 			printf("\nSIL:%d: Error: conflicting types for function '%s'",root->LINE,root->NAME);
 		else
 			printf("\nSIL:%d: Error: redefinition of function '%s'",root->LINE,root->NAME);
@@ -291,7 +295,7 @@ int funcArgCheck(Tnode *root)
 										else if(arg->TYPE == BOOL)
 											strcpy(typ,"boolean");
 										
-										printf("\nSIL:%d: Error: parameter '%s' has type %s in global declaration of function '%s'",root->LINE,root->NAME,typ,gtemp->NAME);
+										printf("\nSIL:%d: Error: parameter '%s' has type '%s' in global declaration of function '%s'",root->LINE,root->NAME,typ,gtemp->NAME);
 										
 										error++;
 									}
@@ -372,7 +376,7 @@ void helplocal(Tnode *root,struct Lsymbol *lnode,int t1)
 
 	if((t1 != lnode->TYPE) && (t1 != 0))
 	{
-		printf("\nSIL:%d: Error: cannot assign %s value to %s variable",root->LINE,typ2,typ1);
+		printf("\nSIL:%d: Error: cannot assign '%s' value to '%s' variable",root->LINE,typ2,typ1);
 		error++;
 	}
 }
@@ -393,7 +397,7 @@ void helpglobal(Tnode *root,struct Gsymbol *gnode,int t1)
 
 	if((t1 != gnode->TYPE) && (t1 != 0))
 	{
-		printf("\nSIL:%d: Error: cannot assign %s value to %s variable",root->LINE,typ2,typ1);
+		printf("\nSIL:%d: Error: cannot assign '%s' value to '%s' variable",root->LINE,typ2,typ1);
 		error++;
 	}
 }
@@ -404,6 +408,9 @@ int bodySemanticCheck(Tnode *root,struct Lsymbol **Lhead)
 	char typ1[10],typ2[10];
 	struct Lsymbol *lnode;
 	struct Gsymbol *gnode;
+	static struct Gsymbol *gfunc;
+	static ArgStruct *Ahead;
+	static int argcnt,paramcnt;
 	
 	if(root == NULL)
 		return 0;
@@ -413,6 +420,78 @@ int bodySemanticCheck(Tnode *root,struct Lsymbol **Lhead)
 		case CONTINUE		:	bodySemanticCheck(root->Ptr1,Lhead);
 								bodySemanticCheck(root->Ptr2,Lhead);
 								return;
+		
+		case RET			:	t1 = bodySemanticCheck(root->Ptr1,Lhead);
+								
+								if(functype == INTGR)
+									strcpy(typ1,"integer");
+								else if(functype == BOOL)
+									strcpy(typ1,"boolean");
+								
+								if(t1 == INTGR)
+									strcpy(typ2,"integer");
+								else if(t1 == BOOL)
+									strcpy(typ2,"boolean");
+								
+								if(functype != t1)
+								{
+									printf("\nSIL:%d: Error: incompatible types when returning type '%s' but '%s' was expected",root->LINE,typ2,typ1);
+									error++;
+								}
+								
+								return;
+		
+		case FUNCCALL		:	gfunc = Glookup(root->NAME);
+								
+								if((gfunc == NULL) || (gfunc->SIZE == -1))
+								{
+									printf("\nSIL:%d: Error: undefined reference to '%s'",root->LINE,root->NAME);
+									error++;
+								}
+								
+								Ahead = gfunc->ARGLIST;
+								argcnt = 0;
+								paramcnt = 0;
+								
+								t1 = bodySemanticCheck(root->Ptr1,Lhead);
+								
+								if(Ahead != NULL)
+								{
+									printf("\nSIL:%d: Error: too few arguments to function '%s'",root->LINE,gfunc->NAME);
+									error++;
+								}
+								
+								else if(argcnt < paramcnt)
+								{
+									printf("\nSIL:%d: Error: too many arguments to function '%s'",root->LINE,gfunc->NAME);
+									error++;
+								}
+								
+								return gtemp->TYPE;
+		
+		case FUNCPARAM		:	paramcnt++;
+		
+								t1 = bodySemanticCheck(root->Ptr1,Lhead);
+								
+								if(Ahead == NULL)
+									return;
+								
+								if(t1 != Ahead->TYPE)
+								{
+									if(Ahead->TYPE == INTGR)
+										strcpy(typ1,"integer");
+									else if(Ahead->TYPE == BOOL)
+										strcpy(typ1,"boolean");
+									
+									printf("\nSIL:%d: Error: incompatible type for argument %d of '%s'; expected argument of type '%s'",root->LINE,argcnt+1,gfunc->NAME,typ1);
+									
+									error++;
+								}
+								
+								argcnt++;
+								Ahead = Ahead->NEXT;
+								
+								return 0;
 		
 		case ITERATIVE		:	t1 = bodySemanticCheck(root->Ptr1,Lhead);
 								
@@ -456,7 +535,7 @@ int bodySemanticCheck(Tnode *root,struct Lsymbol **Lhead)
 									helpglobal(root,gnode,t1);
 									if(((t1 == gnode->TYPE) || (t1 == 0)) && (gnode->SIZE>0))
 									{
-										printf("\nSIL:%d: Error: incompatible types when assigning to type %s[%d] from type %s variable",root->LINE,typ1,gnode->SIZE,typ2);
+										printf("\nSIL:%d: Error: incompatible types when assigning to type '%s[%d]' from type '%s' variable",root->LINE,typ1,gnode->SIZE,typ2);
 										error++;
 									}
 								}
@@ -861,8 +940,20 @@ void argInstall(char *NAME,int TYPE)
 	Anode->TYPE = TYPE;
 	Anode->FLAG = 0;
 	
-	Anode->NEXT = Arghead;
-	Arghead = Anode;
+	if(entry == 1)
+	{
+		Anode->NEXT = Arghead;
+		Arghead = Anode;
+	}
+	
+	else
+	{
+		Anode->NEXT = Argrear->NEXT;
+		Argrear->NEXT = Anode;
+	}
+	
+	Argrear = Anode;
+	entry++;
 }
 
 struct Gsymbol *Glookup(char *NAME)
@@ -931,7 +1022,7 @@ void Linstall(char *NAME,int TYPE,struct Lsymbol **Lhead)
 	
 	Lnode->NAME = malloc(sizeof(char) * (strlen(NAME)+1));
 	strcpy(Lnode->NAME,NAME);
-
+	
 	Lnode->TYPE = TYPE;
 	
 	Lnode->NEXT = *Lhead;

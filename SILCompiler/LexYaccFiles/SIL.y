@@ -103,7 +103,7 @@ Fdef		:	Type ID '(' ArgList ')' '{' LDefblock Body '}'
 			;
 
 Mainblock	:	INTEGER MAIN '(' ')' '{' LDefblock Body '}'
-				{	$$ = TreeCreate(0,MAINBLOCK,"",0,NULL,$6,$7,NULL,line);
+				{	$$ = TreeCreate(INTGR,MAINBLOCK,"",0,NULL,$6,$7,NULL,line);
 					}
 			;
 
@@ -194,7 +194,7 @@ Type		:	INTEGER
 			;
 
 Body		:	BEGN StmtList RetStmt END
-				{	$$ = TreeCreate(0,CONTINUE,"",0,NULL,$2,NULL,NULL,line);
+				{	$$ = TreeCreate(0,CONTINUE,"",0,NULL,$2,$3,NULL,line);
 					}
 			
 			;
@@ -343,11 +343,12 @@ Expr		:	Expr '+' Expr
 			;
 
 ExprList	:	ExprList ',' Expr
-				{	$$ = TreeCreate(0,CONTINUE,"",0,NULL,$1,$3,NULL,$1->LINE);
+				{	tempnode = TreeCreate(0,FUNCPARAM,"",0,NULL,$3,NULL,NULL,$3->LINE);
+					$$ = TreeCreate(0,CONTINUE,"",0,NULL,$1,tempnode,NULL,$1->LINE);
 					}
 			
 			|	Expr
-				{	$$ = $1;
+				{	$$ = TreeCreate(0,FUNCPARAM,"",0,NULL,$1,NULL,NULL,$1->LINE);
 					}
 			
 			|	{	$$ = NULL;

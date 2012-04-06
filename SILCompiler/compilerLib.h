@@ -47,6 +47,7 @@
 #define MAINBLOCK 38
 #define RET 39
 #define FUNCCALL 40
+#define FUNCPARAM 41
 
 typedef struct tnode {
 			int TYPE;
@@ -114,7 +115,7 @@ void helplocal(Tnode *root,struct Lsymbol *lnode,int t1);
 void helpglobal(Tnode *root,struct Gsymbol *gnode,int t1);
 void printGlobal(struct Lsymbol **HEAD);
 
-Tnode *decnode,*argnode;
+Tnode *tempnode,*decnode,*argnode;
 struct Gsymbol *gtemp;
-ArgStruct *Arghead;
-int var,error,line;
+ArgStruct *Arghead,*Argrear;
+int var,error,line,functype,entry;

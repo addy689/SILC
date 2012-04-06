@@ -1,31 +1,38 @@
 decl
-		integer x,y,z;
+		integer x,y;
 		integer swap(integer a,b);
 enddecl
 
 integer swap(integer a,b){
 	decl
-		boolean k;
+		integer z;
 	enddecl
 	
 	begin
-		x[k]=k[k];
+		z=a;
 		a=b;
 		b=z;
+		
 		return 1;
 	end
 }
 
 integer main(){
 	decl
-	integer s;
+		integer flg;
 	enddecl
 	
 	begin
 		read(x);
 		read(y);
-		write(x);
-		write(y);
+		
+		flg = swap(x,y);
+		
+		if(flg==1) then
+			write(x);
+			write(y);
+		endif;
+		
 		return 1;
 	end
 }
