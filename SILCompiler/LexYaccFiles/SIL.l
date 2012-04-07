@@ -75,7 +75,7 @@ FALSE			return FALS;
 					return CONST;
 					}
 
-[-+*=%/,()\[\];{}]		{	return yytext[0];
+[-+*=%/,()\[\];{}&]		{	return yytext[0];
 							}
 
 %%

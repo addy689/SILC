@@ -1,9 +1,8 @@
 decl
-		integer x,y;
-		integer swap(integer a,b);
+		integer swap(integer &a,&b);
 enddecl
 
-integer swap(integer a,b){
+integer swap(integer &a,&b){
 	decl
 		integer z;
 	enddecl
@@ -19,14 +18,14 @@ integer swap(integer a,b){
 
 integer main(){
 	decl
-		integer flg;
+		integer x,y,flg;
 	enddecl
 	
 	begin
 		read(x);
 		read(y);
 		
-		flg = swap(x,y);
+		flg = swap(&x,&y);
 		
 		if(flg==1) then
 			write(x);

@@ -1,5 +1,9 @@
+
 #include "compilerLib.h"
 
+
+/*	Create a node for Abstract Syntax Tree
+	*/
 Tnode *TreeCreate(int TYPE,int NODETYPE,char *NAME,int VALUE,Tnode *ArgList,Tnode *Ptr1,Tnode *Ptr2,Tnode *Ptr3,int LINE)
 {
 	Tnode *N = malloc(sizeof(Tnode));
@@ -21,6 +25,13 @@ Tnode *TreeCreate(int TYPE,int NODETYPE,char *NAME,int VALUE,Tnode *ArgList,Tnod
 	return N;
 }
 
+
+/*	Compile the source code using the constructed Abstract Syntax Tree 
+	Arguments are the root nodes of -
+	1) Global declaration AST,
+	2) Function definitions AST
+	3) main() function definition AST
+	*/
 void compile(Tnode *gdeclroot,Tnode *fdefroot,Tnode *mainroot)
 {
 	error = 0;
@@ -29,35 +40,23 @@ void compile(Tnode *gdeclroot,Tnode *fdefroot,Tnode *mainroot)
 	checkFuncDecl(fdefroot->LINE);
 	funcSemanticCheck(mainroot);
 	
-	printf("\n");
+	printf("\nRUN - \n");
 	if(error == 0)
 	{
-		gAllocate();
-		//ex(fdefroot);
+		Gallocate();
+		funcroot = fdefroot;
+		mroot = mainroot;
+		
+		struct Lsymbol *Ltable;
+		Ltable = NULL;
+		interpreter(mainroot,&Ltable);
 	}
 }
 
-void printGlobal(struct Lsymbol **HEAD)
-{
-	struct Lsymbol *ptr = *HEAD;
-	char typ[10];
-	int ctr = 1;
 
-	printf("\nSIL:%d: \n---GLOBAL TABLE---\n");
-	while(ptr)
-	{
-		if(ptr->TYPE == INTGR)
-			strcpy(typ,"Integer"); 
-		else if(ptr->TYPE == BOOL)
-			strcpy(typ,"Boolean");
-		
-		printf("Entry %d = %s\t%s\n",ctr,ptr->NAME,typ);
-		
-		ctr++;
-		ptr = ptr->NEXT;
-	}
-}
-
+/*	Install all global declarations (identifiers,functions,arrays)
+	present in source program into a global symbol table
+	*/
 void globalInstall(Tnode *root)
 {
 	struct Gsymbol *gnode;
@@ -104,6 +103,8 @@ void globalInstall(Tnode *root)
 								globalInstall(root->Ptr2);
 								break;
 		
+		case IDALIASARG		:
+		
 		case IDARG			:	arg = argLookup(root->NAME,Arghead);
 								
 								if(arg != NULL)
@@ -122,6 +123,38 @@ void globalInstall(Tnode *root)
 	}
 }
 
+
+/*	Install function arguments present in global declaration of function into an argument list
+	*/
+void argInstall(char *NAME,int TYPE)
+{
+	ArgStruct *Anode = malloc(sizeof(ArgStruct));
+	
+	Anode->NAME = malloc(sizeof(char) * (strlen(NAME)+1));
+	strcpy(Anode->NAME,NAME);
+	
+	Anode->TYPE = TYPE;
+	Anode->FLAG = 0;
+	
+	if(entry == 1)
+	{
+		Anode->NEXT = Arghead;
+		Arghead = Anode;
+	}
+	
+	else
+	{
+		Anode->NEXT = Argrear->NEXT;
+		Argrear->NEXT = Anode;
+	}
+	
+	Argrear = Anode;
+	entry++;
+}
+
+
+/*	Check a function's definition for semantic errors
+	*/
 int funcSemanticCheck(Tnode *root)
 {
 	ArgStruct *arg;
@@ -138,10 +171,8 @@ int funcSemanticCheck(Tnode *root)
 								funcSemanticCheck(root->Ptr2);
 								return;
 		
-		case FUNCBLOCK		:	//installs function arguments in local table (with semantic checking)
-								argLocalInstall(root->ArgList,&Lhead);
+		case FUNCBLOCK		:	argLocalInstall(root->ArgList,&Lhead);
 								
-//checks if the function has a global declaration, and checks the function return type. Also checks if the function is a redeclaration
 								gtemp = Glookup(root->NAME);
 								functype = root->Ptr1->TYPE;
 								
@@ -149,7 +180,6 @@ int funcSemanticCheck(Tnode *root)
 								
 								if(gtemp)
 								{
-									//checks the names and types of arguments with the global declaration of function arguments
 									funcArgCheck(root->ArgList);
 									
 									arg = gtemp->ARGLIST;
@@ -178,7 +208,9 @@ int funcSemanticCheck(Tnode *root)
 	}
 }
 
-//installs a function's arguments into that function's Local Symbol table
+
+/*	Installs function arguments into that function's local symbol table (with semantic checking)
+	*/
 void argLocalInstall(Tnode *root,struct Lsymbol **Lhead)
 {
 	struct Lsymbol *lnode;
@@ -198,6 +230,8 @@ void argLocalInstall(Tnode *root,struct Lsymbol **Lhead)
 								argLocalInstall(root->Ptr2,Lhead);
 								break;
 		
+		case IDALIASARG		:
+		
 		case IDARG			:	lnode = Llookup(root->NAME,Lhead);
 								
 								if(lnode != NULL)
@@ -216,6 +250,30 @@ void argLocalInstall(Tnode *root,struct Lsymbol **Lhead)
 	}
 }
 
+
+/*	Lookup a function argument in the function argument list
+	*/
+ArgStruct *argLookup(char *NAME,ArgStruct *HEAD)
+{
+	ArgStruct *ptr = HEAD;
+	
+	while(ptr)
+	{
+		if(!strcmp(ptr->NAME,NAME))
+			return ptr;
+		
+		ptr = ptr->NEXT;
+	}
+	
+	return NULL;
+}
+
+
+/*	Check if function has
+	1) A global declaration
+	2) Same return type as mentioned in global declaration
+	3) No redefinitions
+	*/
 int funcTypeCheck(Tnode *root)
 {
 	char typ[10];
@@ -258,6 +316,9 @@ int funcTypeCheck(Tnode *root)
 	return;
 }
 
+
+/*	Name and Type checking of function arguments against the global declaration
+	*/
 int funcArgCheck(Tnode *root)
 {
 	ArgStruct *arg;
@@ -277,7 +338,8 @@ int funcArgCheck(Tnode *root)
 								funcArgCheck(root->Ptr2);
 								return;
 		
-//checks argument against function global arguments stored in linked list having head = gtemp->ARGLIST
+		case IDALIASARG		:
+		
 		case IDARG			:	arg = argLookup(root->NAME,gtemp->ARGLIST);
 								
 								if(arg == NULL)
@@ -307,6 +369,9 @@ int funcArgCheck(Tnode *root)
 	}
 }
 
+
+/*	Check for globally declared functions that do not have a function definition
+	*/
 void checkFuncDecl(int LINE)
 {
 	struct Gsymbol *ptr;
@@ -325,6 +390,10 @@ void checkFuncDecl(int LINE)
 	}
 }
 
+
+/*	Install all local declarations (identifiers) present in
+	a function into that function's local symbol table
+	*/
 void localInstall(Tnode *root,struct Lsymbol **Lhead)
 {
 	struct Lsymbol *lnode;
@@ -360,48 +429,20 @@ void localInstall(Tnode *root,struct Lsymbol **Lhead)
 	}
 }
 
-void helplocal(Tnode *root,struct Lsymbol *lnode,int t1)
-{
-	char typ1[10],typ2[10];
-	
-	if(lnode->TYPE == INTGR)
-		strcpy(typ1,"integer");
-	else if(lnode->TYPE == BOOL)
-		strcpy(typ1,"boolean");
 
-	if(t1 == INTGR)
-		strcpy(typ2,"integer");
-	else if(t1 == BOOL)
-		strcpy(typ2,"boolean");
-
-	if((t1 != lnode->TYPE) && (t1 != 0))
-	{
-		printf("\nSIL:%d: Error: cannot assign '%s' value to '%s' variable",root->LINE,typ2,typ1);
-		error++;
-	}
-}
-
-void helpglobal(Tnode *root,struct Gsymbol *gnode,int t1)
-{
-	char typ1[10],typ2[10];
-	
-	if(gnode->TYPE == INTGR)
-		strcpy(typ1,"integer");
-	else if(gnode->TYPE == BOOL)
-		strcpy(typ1,"boolean");
-
-	if(t1 == INTGR)
-		strcpy(typ2,"integer");
-	else if(t1 == BOOL)
-		strcpy(typ2,"boolean");
-
-	if((t1 != gnode->TYPE) && (t1 != 0))
-	{
-		printf("\nSIL:%d: Error: cannot assign '%s' value to '%s' variable",root->LINE,typ2,typ1);
-		error++;
-	}
-}
-
+/*	Check function body for the following-
+	1) correct return type
+	2) if a function is called,
+		a) function that is called must have a global declaration
+		b) call parameters must have same type as the arguments in function declaration
+		c) number of call parameters must be equal to number of arguments in function declaration
+	3) if, while condition must be a logical expression
+	4) type checking during assignment operation
+	5) read/write operations must not be allowed on boolean variables
+	6) +,-,*,/,%,>,>=,<,<=,==,!= operations must not be allowed on logical expressions
+	7) AND, OR and NOT operations must not be allowed on arithmetic expressions
+	8) all identifiers must have either a local or global declaration
+	*/
 int bodySemanticCheck(Tnode *root,struct Lsymbol **Lhead)
 {
 	int t1,t2;
@@ -528,11 +569,11 @@ int bodySemanticCheck(Tnode *root,struct Lsymbol **Lhead)
 								t1 = bodySemanticCheck(root->Ptr1,Lhead);
 								
 								if(lnode != NULL)
-									helplocal(root,lnode,t1);
+									checkLocalAssign(root,lnode,t1);
 								
 								else if(gnode != NULL)
 								{
-									helpglobal(root,gnode,t1);
+									checkGlobalAssign(root,gnode,t1);
 									if(((t1 == gnode->TYPE) || (t1 == 0)) && (gnode->SIZE>0))
 									{
 										printf("\nSIL:%d: Error: incompatible types when assigning to type '%s[%d]' from type '%s' variable",root->LINE,typ1,gnode->SIZE,typ2);
@@ -571,10 +612,10 @@ int bodySemanticCheck(Tnode *root,struct Lsymbol **Lhead)
 								t1 = bodySemanticCheck(root->Ptr2,Lhead);
 								
 								if(lnode != NULL)
-									helplocal(root,lnode,t1);
+									checkLocalAssign(root,lnode,t1);
 								
 								else if(gnode != NULL)
-									helpglobal(root,gnode,t1);
+									checkGlobalAssign(root,gnode,t1);
 								
 								return 0;
 		
@@ -612,7 +653,7 @@ int bodySemanticCheck(Tnode *root,struct Lsymbol **Lhead)
 									error++;
 								}
 								
-								else if((lnode->TYPE == BOOL) || (gnode->TYPE == BOOL))
+								else if(((lnode != NULL) && (lnode->TYPE == BOOL)) || ((gnode != NULL) && (gnode->TYPE == BOOL)))
 								{
 									printf("\nSIL:%d: Error: read operation is not allowed on boolean variables",root->LINE);
 									error++;
@@ -852,6 +893,8 @@ int bodySemanticCheck(Tnode *root,struct Lsymbol **Lhead)
 		
 		case False			:	return root->TYPE;
 		
+		case IDADDR			:
+		
 		case IDFR			:	lnode = Llookup(root->NAME,Lhead);
 								gnode = Glookup(root->NAME);
 								
@@ -915,47 +958,59 @@ int bodySemanticCheck(Tnode *root,struct Lsymbol **Lhead)
 	}
 }
 
-ArgStruct *argLookup(char *NAME,ArgStruct *HEAD)
+
+/*	Check assignment statement ('variable' = 'expression') for type mismatch,
+	given that 'variable' is a local variable
+	*/
+void checkLocalAssign(Tnode *root,struct Lsymbol *lnode,int t1)
 {
-	ArgStruct *ptr = HEAD;
+	char typ1[10],typ2[10];
 	
-	while(ptr)
+	if(lnode->TYPE == INTGR)
+		strcpy(typ1,"integer");
+	else if(lnode->TYPE == BOOL)
+		strcpy(typ1,"boolean");
+
+	if(t1 == INTGR)
+		strcpy(typ2,"integer");
+	else if(t1 == BOOL)
+		strcpy(typ2,"boolean");
+
+	if((t1 != lnode->TYPE) && (t1 != 0))
 	{
-		if(!strcmp(ptr->NAME,NAME))
-			return ptr;
-		
-		ptr = ptr->NEXT;
+		printf("\nSIL:%d: Error: cannot assign '%s' value to '%s' variable",root->LINE,typ2,typ1);
+		error++;
 	}
-	
-	return NULL;
 }
 
-void argInstall(char *NAME,int TYPE)
+
+/*	Check assignment statement ('variable' = 'expression') for type mismatch,
+	given that 'variable' is a global variable
+	*/
+void checkGlobalAssign(Tnode *root,struct Gsymbol *gnode,int t1)
 {
-	ArgStruct *Anode = malloc(sizeof(ArgStruct));
+	char typ1[10],typ2[10];
 	
-	Anode->NAME = malloc(sizeof(char) * (strlen(NAME)+1));
-	strcpy(Anode->NAME,NAME);
-	
-	Anode->TYPE = TYPE;
-	Anode->FLAG = 0;
-	
-	if(entry == 1)
+	if(gnode->TYPE == INTGR)
+		strcpy(typ1,"integer");
+	else if(gnode->TYPE == BOOL)
+		strcpy(typ1,"boolean");
+
+	if(t1 == INTGR)
+		strcpy(typ2,"integer");
+	else if(t1 == BOOL)
+		strcpy(typ2,"boolean");
+
+	if((t1 != gnode->TYPE) && (t1 != 0))
 	{
-		Anode->NEXT = Arghead;
-		Arghead = Anode;
+		printf("\nSIL:%d: Error: cannot assign '%s' value to '%s' variable",root->LINE,typ2,typ1);
+		error++;
 	}
-	
-	else
-	{
-		Anode->NEXT = Argrear->NEXT;
-		Argrear->NEXT = Anode;
-	}
-	
-	Argrear = Anode;
-	entry++;
 }
 
+
+/*	Look up an identifier in the global symbol table
+	*/
 struct Gsymbol *Glookup(char *NAME)
 {
 	struct Gsymbol *ptr = Ghead;
@@ -971,13 +1026,16 @@ struct Gsymbol *Glookup(char *NAME)
 	return NULL;
 }
 
+
+/*	Install an identifier in the global symbol table
+	*/
 void Ginstall(char *NAME,int TYPE,int SIZE,ArgStruct *ARGLIST)
 {
 	struct Gsymbol *Gnode = malloc(sizeof(struct Gsymbol));
 	
 	Gnode->NAME = malloc(sizeof(char) * (strlen(NAME)+1));
 	strcpy(Gnode->NAME,NAME);
-
+	
 	Gnode->ARGLIST = ARGLIST;
 	Gnode->TYPE = TYPE;
 	Gnode->SIZE = SIZE;
@@ -986,21 +1044,9 @@ void Ginstall(char *NAME,int TYPE,int SIZE,ArgStruct *ARGLIST)
 	Ghead = Gnode;
 }
 
-void gAllocate()
-{
-	struct Gsymbol *Gnode = Ghead;
-	
-	while(Gnode)
-	{
-		if(Gnode->SIZE > 0)
-			Gnode->BINDING = malloc(sizeof(int) * Gnode->SIZE);
-		else if(Gnode->SIZE == 0)
-			Gnode->BINDING = malloc(sizeof(int));
-		
-		Gnode = Gnode->NEXT;
-	}
-}
 
+/*	Look up an identifier in local symbol table (of a function)
+	*/
 struct Lsymbol *Llookup(char *NAME,struct Lsymbol **Lhead)
 {
 	struct Lsymbol *ptr = *Lhead;
@@ -1016,6 +1062,9 @@ struct Lsymbol *Llookup(char *NAME,struct Lsymbol **Lhead)
 	return NULL;
 }
 
+
+/*	Install an identifier in the local symbol table (of a function)
+	*/
 void Linstall(char *NAME,int TYPE,struct Lsymbol **Lhead)
 {
 	struct Lsymbol *Lnode = malloc(sizeof(struct Lsymbol));
@@ -1029,90 +1078,273 @@ void Linstall(char *NAME,int TYPE,struct Lsymbol **Lhead)
 	*Lhead = Lnode;
 }
 
-int ex(Tnode *root,struct Lsymbol **Lhead)
+
+
+/**####################################################
+#INTERPRETER
+####################################################*/
+
+/*
+	*/
+int interpreter(Tnode *root,struct Lsymbol **Lhead)
 {
-	struct Gsymbol *gnode;
+	if(root == NULL)
+		return;
+	
+	switch(root->NODETYPE)
+	{
+		case MAINBLOCK		:	localDecInstall(root->Ptr1,Lhead);
+								return evalBody(root->Ptr2,Lhead);
+	
+		case FUNCBLOCK		:	localDecInstall(root->Ptr2,Lhead);
+								return evalBody(root->Ptr3,Lhead);
+	}
+}
+
+void localDecInstall(Tnode *root,struct Lsymbol **Lhead)
+{
+	int garbval;
 	
 	if(root == NULL)
 		return;
 	
 	switch(root->NODETYPE)
 	{
-		case CONTINUE		:	ex(root->Ptr1,Lhead);
-								ex(root->Ptr2,Lhead);
+		case CONTINUE		:	localDecInstall(root->Ptr1,Lhead);
+								localDecInstall(root->Ptr2,Lhead);
 								break;
 		
-		case ITERATIVE		:	while(ex(root->Ptr1,Lhead))
-									ex(root->Ptr2,Lhead);
+		case DECLSTATEMENT	:	decnode = root->Ptr1;
+								localDecInstall(root->Ptr2,Lhead);
+								break;
+		
+		case IDFRDECL		:	binding = NULL;
+								LinstallBind(root->NAME,decnode->TYPE,garbval,Lhead);
+								break;
+	}
+}
+
+
+/*	Allocate memory to identifiers in the global symbol table
+	*/
+void Gallocate()
+{
+	struct Gsymbol *Gnode = Ghead;
+	
+	while(Gnode)
+	{
+		if(Gnode->SIZE > 0)
+			Gnode->BINDING = malloc(sizeof(int) * Gnode->SIZE);
+		else if(Gnode->SIZE == 0)
+			Gnode->BINDING = malloc(sizeof(int));
+		
+		Gnode = Gnode->NEXT;
+	}
+}
+
+void LinstallBind(char *NAME,int TYPE,int VALUE,struct Lsymbol **Lhead)
+{
+	struct Lsymbol *Lnode = malloc(sizeof(struct Lsymbol));
+	
+	Lnode->NAME = malloc(sizeof(char) * (strlen(NAME)+1));
+	strcpy(Lnode->NAME,NAME);
+	
+	Lnode->TYPE = TYPE;
+	
+	if(binding == NULL)
+	{
+		Lnode->BINDING = malloc(sizeof(int));
+		*Lnode->BINDING = VALUE;
+	}
+	
+	else Lnode->BINDING = binding;	//For call by reference
+	
+	Lnode->NEXT = *Lhead;
+	*Lhead = Lnode;
+}
+
+int evalBody(Tnode *root,struct Lsymbol **Lhead)
+{
+	int t;
+	struct Gsymbol *gnode;
+	struct Lsymbol *lnode;
+	
+	if(root == NULL)
+		return;
+	
+	switch(root->NODETYPE)
+	{
+		case CONTINUE		:	evalBody(root->Ptr1,Lhead);
+								return evalBody(root->Ptr2,Lhead);
+		
+		case FUNCCALL		:	gnode = Glookup(root->NAME);
+								Arghead = gnode->ARGLIST;
+								
+								struct Lsymbol *Ltable;
+								Ltable = NULL;
+								
+								if(Arghead != NULL)
+									funcParamInstall(root->Ptr1,Lhead,&Ltable);
+								
+								tempnode = searchFunc(root->NAME,funcroot);
+								return interpreter(tempnode,&Ltable);
+		
+		case IDADDR			:	lnode = Llookup(root->NAME,Lhead);
+								gnode = Glookup(root->NAME);
+								
+								if(lnode != NULL)
+									binding = lnode->BINDING;
+								else binding = gnode->BINDING;
+								
+								return *binding;
+		
+		case RET			:	return evalBody(root->Ptr1,Lhead);
+		
+		case ITERATIVE		:	while(evalBody(root->Ptr1,Lhead))
+									evalBody(root->Ptr2,Lhead);
 								return;
 		
-		case CONDITIONAL	:	if(ex(root->Ptr1,Lhead))
-									ex(root->Ptr2,Lhead);
+		case CONDITIONAL	:	if(evalBody(root->Ptr1,Lhead))
+									evalBody(root->Ptr2,Lhead);
 								else
-									ex(root->Ptr3,Lhead);
+									evalBody(root->Ptr3,Lhead);
 								return;
 		
-		case ASSIGN			:	gnode = Glookup(root->NAME);
-								*gnode->BINDING = ex(root->Ptr1,Lhead);
+		case ASSIGN			:	lnode = Llookup(root->NAME,Lhead);
+								gnode = Glookup(root->NAME);
+								
+								if(lnode != NULL)
+									*lnode->BINDING = evalBody(root->Ptr1,Lhead);
+								else *gnode->BINDING = evalBody(root->Ptr1,Lhead);
+								
 								return;
 		
 		case ARRAYASSIGN	:	gnode = Glookup(root->NAME);
-								gnode->BINDING[ex(root->Ptr1,Lhead)] = ex(root->Ptr2,Lhead);
+								gnode->BINDING[evalBody(root->Ptr1,Lhead)] = evalBody(root->Ptr2,Lhead);
 								return;
 		
 		case RD				:	scanf("%d",&var);
+								lnode = Llookup(root->NAME,Lhead);
 								gnode = Glookup(root->NAME);
-								*gnode->BINDING = var;
+								
+								if(lnode != NULL)
+									*lnode->BINDING = var;
+								else *gnode->BINDING = var;
 								return;
 		
 		case ARRAYRD		:	scanf("%d",&var);
 								gnode = Glookup(root->NAME);
-								gnode->BINDING[ex(root->Ptr1,Lhead)] = var;
+								gnode->BINDING[evalBody(root->Ptr1,Lhead)] = var;
 								return;
 		
-		case WRIT			:	printf("%d\n",ex(root->Ptr1,Lhead));
+		case WRIT			:	printf("%d\n",evalBody(root->Ptr1,Lhead));
 								return;
 		
-		case ADD			:	return ex(root->Ptr1,Lhead) + ex(root->Ptr2,Lhead);
+		case ADD			:	return evalBody(root->Ptr1,Lhead) + evalBody(root->Ptr2,Lhead);
 		
-		case SUB			:	return ex(root->Ptr1,Lhead) - ex(root->Ptr2,Lhead);
+		case SUB			:	return evalBody(root->Ptr1,Lhead) - evalBody(root->Ptr2,Lhead);
 		
-		case MUL			:	return ex(root->Ptr1,Lhead) * ex(root->Ptr2,Lhead);
+		case MUL			:	return evalBody(root->Ptr1,Lhead) * evalBody(root->Ptr2,Lhead);
 		
-		case DIV			:	return ex(root->Ptr1,Lhead) / ex(root->Ptr2,Lhead);
+		case DIV			:	return evalBody(root->Ptr1,Lhead) / evalBody(root->Ptr2,Lhead);
 		
-		case MOD			:	return ex(root->Ptr1,Lhead) % ex(root->Ptr2,Lhead);
+		case MOD			:	return evalBody(root->Ptr1,Lhead) % evalBody(root->Ptr2,Lhead);
 		
-		case GT				:	return ex(root->Ptr1,Lhead) > ex(root->Ptr2,Lhead);
+		case GT				:	return evalBody(root->Ptr1,Lhead) > evalBody(root->Ptr2,Lhead);
 		
-		case LT				:	return ex(root->Ptr1,Lhead) < ex(root->Ptr2,Lhead);
+		case LT				:	return evalBody(root->Ptr1,Lhead) < evalBody(root->Ptr2,Lhead);
 		
-		case GTE			:	return ex(root->Ptr1,Lhead) >= ex(root->Ptr2,Lhead);
+		case GTE			:	return evalBody(root->Ptr1,Lhead) >= evalBody(root->Ptr2,Lhead);
 		
-		case LTE			:	return ex(root->Ptr1,Lhead) <= ex(root->Ptr2,Lhead);
+		case LTE			:	return evalBody(root->Ptr1,Lhead) <= evalBody(root->Ptr2,Lhead);
 		
-		case EQ				:	return ex(root->Ptr1,Lhead) == ex(root->Ptr2,Lhead);
+		case EQ				:	return evalBody(root->Ptr1,Lhead) == evalBody(root->Ptr2,Lhead);
 		
-		case NE				:	return ex(root->Ptr1,Lhead) != ex(root->Ptr2,Lhead);
+		case NE				:	return evalBody(root->Ptr1,Lhead) != evalBody(root->Ptr2,Lhead);
 		
-		case And			:	return ex(root->Ptr1,Lhead) && ex(root->Ptr2,Lhead);
+		case And			:	return evalBody(root->Ptr1,Lhead) && evalBody(root->Ptr2,Lhead);
 		
-		case Or				:	return ex(root->Ptr1,Lhead) || ex(root->Ptr2,Lhead);
+		case Or				:	return evalBody(root->Ptr1,Lhead) || evalBody(root->Ptr2,Lhead);
 		
-		case Not			:	return !ex(root->Ptr1,Lhead);
+		case Not			:	return !evalBody(root->Ptr1,Lhead);
 		
 		case True			:	return 1;
 		
 		case False			:	return 0;
 		
-		case IDFR			:	gnode = Glookup(root->NAME);
-								return *gnode->BINDING;
+		case IDFR			:	lnode = Llookup(root->NAME,Lhead);
+								gnode = Glookup(root->NAME);
+								
+								if(lnode != NULL)
+									return *lnode->BINDING;
+								else return *gnode->BINDING;
 		
 		case ARRAYIDFR		:	gnode = Glookup(root->NAME);
-								return gnode->BINDING[ex(root->Ptr1,Lhead)];
+								return gnode->BINDING[evalBody(root->Ptr1,Lhead)];
 		
 		case NUM			:	return root->VALUE;
 		
 		default				:	printf("How did flag get this value!");
+	}
+}
+
+Tnode *searchFunc(char *NAME,Tnode *root)
+{
+	if(!strcmp(NAME,"main"))
+		return mroot;
+	
+	switch(root->NODETYPE)
+	{
+		case CONTINUE		:	tempnode = searchFunc(NAME,root->Ptr1);
+								if(tempnode != NULL)
+									return tempnode;
+								
+								else return searchFunc(NAME,root->Ptr2);
+		
+		case FUNCBLOCK		:	if(!strcmp(NAME,root->NAME))
+									return root;
+								
+								else return NULL;
+	}
+}
+
+int funcParamInstall(Tnode *root,struct Lsymbol **Lhead,struct Lsymbol **Ltable)
+{
+	int t;
+	
+	if(root == NULL)
+		return;
+	
+	switch(root->NODETYPE)
+	{
+		case CONTINUE		:	funcParamInstall(root->Ptr1,Lhead,Ltable);
+								return funcParamInstall(root->Ptr2,Lhead,Ltable);
+	
+		case FUNCPARAM		:	binding = NULL;
+								t = evalBody(root->Ptr1,Lhead);
+								LinstallBind(Arghead->NAME,Arghead->TYPE,t,Ltable);
+								Arghead = Arghead->NEXT;
+								return;
+	}
+}
+
+void printGlobal(struct Lsymbol **HEAD)
+{
+	struct Lsymbol *ptr = *HEAD;
+	char typ[10];
+	int ctr = 1;
+
+	printf("\nSIL:%d: \n---GLOBAL TABLE---\n");
+	while(ptr)
+	{
+		if(ptr->TYPE == INTGR)
+			strcpy(typ,"Integer"); 
+		else if(ptr->TYPE == BOOL)
+			strcpy(typ,"Boolean");
+		
+		printf("Entry %d = %s\t%s\n",ctr,ptr->NAME,typ);
+		
+		ctr++;
+		ptr = ptr->NEXT;
 	}
 }

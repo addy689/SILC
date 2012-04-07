@@ -19,7 +19,7 @@
 %type <T> GDefblock GDefList GDecl GIdList GId
 %type <T> FdefList Fdef Mainblock RetStmt
 %type <T> LDefblock LDefList LDecl LIdList LId
-%type <T> ArgList ArgDecl ArgIdList ArgId Type Body StmtList Stmt ElseStmt Expr ExprList
+%type <T> ArgList ArgDecl ArgIdList ArgId Type Body StmtList Stmt ElseStmt Expr Parameter ParameterList
 
 %left ','
 %right '='
@@ -28,7 +28,7 @@
 %left Gt Lt GEq LEq
 %left '+' '-'
 %left '*' '/' '%'
-%right NOT
+%right NOT '&'
 %left '(' ')' '[' ']'
 
 %%
@@ -103,7 +103,7 @@ Fdef		:	Type ID '(' ArgList ')' '{' LDefblock Body '}'
 			;
 
 Mainblock	:	INTEGER MAIN '(' ')' '{' LDefblock Body '}'
-				{	$$ = TreeCreate(INTGR,MAINBLOCK,"",0,NULL,$6,$7,NULL,line);
+				{	$$ = TreeCreate(INTGR,MAINBLOCK,"main",0,NULL,$6,$7,NULL,line);
 					}
 			;
 
@@ -179,6 +179,10 @@ ArgIdList	:	ArgIdList ',' ArgId
 
 ArgId		:	ID
 				{	$$ = TreeCreate(0,IDARG,$1,0,NULL,NULL,NULL,NULL,line);
+					}
+			
+			|	'&' ID
+				{	$$ = TreeCreate(0,IDALIASARG,$2,0,NULL,NULL,NULL,NULL,line);
 					}
 			
 			;
@@ -336,22 +340,34 @@ Expr		:	Expr '+' Expr
 				{	$$ = TreeCreate(0,ARRAYIDFR,$1,0,NULL,$3,NULL,NULL,$3->LINE);
 					}
 			
-			|	ID '(' ExprList ')'
-				{	$$ = TreeCreate(0,FUNCCALL,$1,0,NULL,$3,NULL,NULL,$3->LINE);
+			|	ID '(' ParameterList ')'
+			{	if($3 != NULL)
+					$$ = TreeCreate(0,FUNCCALL,$1,0,NULL,$3,NULL,NULL,$3->LINE);
+				else $$ = TreeCreate(0,FUNCCALL,$1,0,NULL,$3,NULL,NULL,line);
 					}
 			
 			;
 
-ExprList	:	ExprList ',' Expr
-				{	tempnode = TreeCreate(0,FUNCPARAM,"",0,NULL,$3,NULL,NULL,$3->LINE);
-					$$ = TreeCreate(0,CONTINUE,"",0,NULL,$1,tempnode,NULL,$1->LINE);
+ParameterList	:	ParameterList ',' Parameter
+					{	tempnode = TreeCreate(0,FUNCPARAM,"",0,NULL,$3,NULL,NULL,$3->LINE);
+						$$ = TreeCreate(0,CONTINUE,"",0,NULL,$1,tempnode,NULL,$1->LINE);
+						}
+				
+				|	Parameter
+					{	$$ = TreeCreate(0,FUNCPARAM,"",0,NULL,$1,NULL,NULL,$1->LINE);
+						}
+				
+				|	{	$$ = NULL;
+						}
+			
+				;
+
+Parameter	:	Expr
+				{	$$ = $1;
 					}
 			
-			|	Expr
-				{	$$ = TreeCreate(0,FUNCPARAM,"",0,NULL,$1,NULL,NULL,$1->LINE);
-					}
-			
-			|	{	$$ = NULL;
+			|	'&' ID
+				{	$$ = TreeCreate(0,IDADDR,$2,0,NULL,NULL,NULL,NULL,line);
 					}
 			
 			;
