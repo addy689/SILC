@@ -1,0 +1,37 @@
+decl
+		integer swap(integer &a,&b);
+enddecl
+
+integer swap(integer &a,&b){
+	decl
+		integer z;
+	enddecl
+	
+	begin
+		z=a;
+		a=b;
+		b=z;
+		
+		return 1;
+	end
+}
+
+integer main(){
+	decl
+		integer x,y,flg;
+	enddecl
+	
+	begin
+		read(x);
+		read(y);
+		
+		flg = swap(&x,&y);
+		
+		if(flg==1) then
+			write(x);
+			write(y);
+		endif;
+		
+		return 1;
+	end
+}

@@ -1,0 +1,17 @@
+decl
+	integer i,sum,n,a[15],j;
+enddecl
+
+integer main()
+{
+	decl
+	enddecl
+	
+	begin
+		read(n);
+		read(j);
+		i=n+j*j;
+		write(i);
+		return 1;
+	end
+}

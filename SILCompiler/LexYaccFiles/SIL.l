@@ -10,6 +10,10 @@ letter	[A-Za-z]
 
 [\t ]+		;
 
+main			return MAIN;
+
+return			return RETURN;
+
 decl			return DECL;
 
 enddecl			return ENDDECL;
@@ -68,10 +72,10 @@ FALSE			return FALS;
 											}
 
 {digit}+		{	yylval.intval = atoi(yytext);
-					return DIGIT;
+					return CONST;
 					}
 
-[-+*=%/,()\[\];]		{	return yytext[0];
+[-+*=%/,()\[\];{}&]		{	return yytext[0];
 							}
 
 %%

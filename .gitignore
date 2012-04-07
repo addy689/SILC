@@ -9,13 +9,13 @@ Main/makefile
 Main/lex.yy.c
 Main/*.tab.c
 Main/t.c
-
+Main/CODE
 *.o
 */*.o
 */*/*.o
 
-*/a.out
-*/*/a.out
+*/*.out
+*/*/*.out
 
-*/test.c
-*/*/test.c
+*/test
+*/*/test

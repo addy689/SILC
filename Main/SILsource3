@@ -1,0 +1,42 @@
+decl
+	integer a[20],search();
+enddecl
+
+integer search(){
+	decl
+		integer i,x,flag;
+	enddecl
+	
+	begin
+		flag=0;
+		i=0;
+		while(i<5) do
+			read(a[i]);
+			i=i+1;
+		endwhile;
+	
+		read(x);
+		
+		i=0;
+		while(i<5) do
+			if(x==a[i]) then
+				flag = 1;
+			endif;
+			
+			i=i+1;
+		endwhile;
+		
+		return flag;
+	end
+}
+
+integer main(){
+	decl
+	
+	enddecl
+	
+	begin
+		write(search());
+		return 1;
+	end
+}
