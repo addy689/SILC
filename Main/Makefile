@@ -1,5 +1,7 @@
-sil.out: SIL.tab.c compilerLib.o
-	gcc $(CFLAGS) -o sil.out SIL.tab.c -ll compilerLib.o
+all:	sil
+
+sil: SIL.tab.c compilerLib.o
+	gcc $(CFLAGS) -o sil SIL.tab.c -ll compilerLib.o
 
 compilerLib.o: ../SILCompiler/compilerLib.c ../SILCompiler/compilerLib.h
 	gcc $(CFLAGS) -c ../SILCompiler/compilerLib.c
@@ -14,4 +16,4 @@ clean:
 	rm SIL.tab.c
 	rm lex.yy.c
 	rm *.o
-	rm sil.out
+	rm sil

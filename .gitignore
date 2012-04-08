@@ -9,7 +9,10 @@ Main/makefile
 Main/lex.yy.c
 Main/*.tab.c
 Main/t.c
-Main/CODE
+Main/sil
+Main/SIM_Simulator/sim
+Main/SIM_Simulator/lex.yy.c
+
 *.o
 */*.o
 */*/*.o

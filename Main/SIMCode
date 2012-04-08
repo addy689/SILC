@@ -1,0 +1,43 @@
+
+*** ASSIGNMENT ***
+MOV R0 0 
+MOV [0] R0
+
+*** ITERATION ***
+Label0:
+MOV R0 [0]
+MOV R1 3 
+LT R0 R1
+JZ R0 Label1
+
+*** WRITE ***
+MOV R0 [0]
+OUT R0
+
+*** ASSIGNMENT ***
+MOV R0 [0]
+MOV R1 1 
+ADD R0 R1
+MOV [0] R0
+JMP Label0
+Label1:
+
+*** READ ***
+IN R0
+MOV [2] R0
+
+*** READ ***
+IN R0
+MOV [18] R0
+
+*** ASSIGNMENT ***
+MOV R0 [2]
+MOV R1 [18]
+MOV R2 [18]
+MUL R1 R2
+ADD R0 R1
+MOV [0] R0
+
+*** WRITE ***
+MOV R0 [0]
+OUT R0
