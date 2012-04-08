@@ -1,5 +1,7 @@
-/*
-	This file contains the Yacc file specification for constructing an expression tree for a SIL program
+/**
+* Copyright (C) <2012> Addy Singh <addy689@gmail.com>
+
+* This file contains the Yacc file specification for constructing an expression tree for a SIL source program
 */
 
 %{

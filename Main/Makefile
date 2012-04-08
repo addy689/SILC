@@ -1,4 +1,3 @@
-
 sil.out: SIL.tab.c compilerLib.o
 	gcc $(CFLAGS) -o sil.out SIL.tab.c -ll compilerLib.o
 

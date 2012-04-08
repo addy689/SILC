@@ -1,6 +1,8 @@
+/**
+* Copyright (C) <2012> Addy Singh <addy689@gmail.com>
+*/
 
 #include "compilerLib.h"
-
 
 /*	Create a node for Abstract Syntax Tree
 	*/

@@ -1,3 +1,7 @@
+/**
+* Copyright (C) <2012> Addy Singh <addy689@gmail.com>
+*/
+
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
