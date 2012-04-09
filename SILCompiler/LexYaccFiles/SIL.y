@@ -253,10 +253,23 @@ Stmt		:	WHILE '(' Expr ')' DO StmtList ENDWHILE ';'
 				{	$$ = TreeCreate(0,ARRAYRD,$3,0,NULL,$5,NULL,NULL,$5->LINE);
 					}
 			
+			|	READ '(' error ')' ';'
+				{
+					printf("\nSIL:%d: Error: Read statement can read only an identifier/array.",line);
+				}
+			
 			|	WRITE '(' Expr ')' ';'
 				{	$$ = TreeCreate(0,WRIT,"",0,NULL,$3,NULL,NULL,$3->LINE);
 					}
+			|	WRITE '(' error ')' ';'
+				{
+					printf("\nSIL:%d: Error: Write statement can only write expressions.",line);
+				}
 			
+			|	error ';'
+				{
+					printf("\nSIL:%d: Error: Syntax errors around lines %d, %d",line,line-1,line);
+				}
 			;
 
 ElseStmt	:	ELSE StmtList
@@ -353,7 +366,10 @@ Expr		:	Expr '+' Expr
 					$$ = TreeCreate(0,FUNCCALL,$1,0,NULL,$3,NULL,NULL,$3->LINE);
 				else $$ = TreeCreate(0,FUNCCALL,$1,0,NULL,$3,NULL,NULL,line);
 					}
-			
+			|	error ';'
+				{
+					printf("\nSIL:%d: Error: Syntax errors around lines %d, %d",line,line-1,line);
+				}
 			;
 
 ParameterList	:	ParameterList ',' Parameter
@@ -361,13 +377,18 @@ ParameterList	:	ParameterList ',' Parameter
 						$$ = TreeCreate(0,CONTINUE,"",0,NULL,$1,tempnode,NULL,$1->LINE);
 						}
 				
+				|	error
+					{
+						printf("\nSIL:%d: Error: Syntax errors around lines %d, %d",line,line-1,line);
+					}
+				
 				|	Parameter
 					{	$$ = TreeCreate(0,FUNCPARAM,"",0,NULL,$1,NULL,NULL,$1->LINE);
 						}
 				
 				|	{	$$ = NULL;
 						}
-			
+				
 				;
 
 Parameter	:	Expr
@@ -377,6 +398,11 @@ Parameter	:	Expr
 			|	'&' ID
 				{	$$ = TreeCreate(0,IDADDR,$2,0,NULL,NULL,NULL,NULL,line);
 					}
+			
+			|	'&' error
+				{
+					printf("\nSIL:%d: Error: Address operator could be used only with a variable.",line);
+				}
 			
 			;
 
