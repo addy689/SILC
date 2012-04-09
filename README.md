@@ -1,7 +1,7 @@
 # SILC
 
-A compiler for the *Simple Integer Language (SIL)* that reads a SIL source program, and generates instructions for a target machine known as the *Simple Integer Machine (SIM)*.
-Source Language (SIL) description can be found at [http://athena.nitc.ac.in/~kmurali/Compiler/sil.html]
+A compiler for the *Simple Integer Language (SIL)* that reads a SIL source program, and generates instructions for a target machine known as the *Simple Integer Machine (SIM)*.  
+Source Language (SIL) description can be found at [http://athena.nitc.ac.in/~kmurali/Compiler/sil.html]  
 Target Machine (SIM) Architecture description can be found at [http://athena.nitc.ac.in/~kmurali/Compiler/sim.html]
 
 ## Author :
