@@ -325,7 +325,7 @@ Expr		:	Expr '+' Expr
 					}
 			
 			|	TRU
-				{	$$ = TreeCreate(BOOL,True,"",0,NULL,NULL,NULL,NULL,line);
+				{	$$ = TreeCreate(BOOL,True,"",1,NULL,NULL,NULL,NULL,line);
 					}
 			
 			|	FALS

@@ -60,7 +60,7 @@ void compile(Tnode *gdeclroot,Tnode *fdefroot,Tnode *mainroot)
 		interpreter(mainroot,&Ltable);
 		
 		fp = fopen("SIMCode","w");
-		regcnt = 0;
+		regcnt = -1;
 		labelcnt = -1;
 		codeGenerate(mainroot->Ptr2);
 		fclose(fp);
@@ -1424,6 +1424,7 @@ int codeGenerate(Tnode *root)
 								fprintf(fp,"MOV R%d %d\n",r2,loc);
 								fprintf(fp,"ADD R%d R%d\n",r1,r2);
 								freeReg();
+								
 								fprintf(fp,"MOV [R%d] R%d\n",r1,r);
 								freeReg();
 								freeReg();
@@ -1445,88 +1446,150 @@ int codeGenerate(Tnode *root)
 								
 								return;
 		
-		case GT				:	r = codeGenerate(root->Ptr1);
-								codeGenerate(root->Ptr2);
-								fprintf(fp,"GT R%d R%d\n",r,r+1);
+		case ARRAYASSIGN	:	fprintf(fp,"\n*** ARRAY ASSIGNMENT ***\n");
+								loc = Glookup(root->NAME)->LOCATION;
+								r1 = codeGenerate(root->Ptr1);
+								r2 = getReg();
+								fprintf(fp,"MOV R%d %d\n",r2,loc);
+								fprintf(fp,"ADD R%d R%d\n",r1,r2);
 								freeReg();
 								
-								return r;
-		
-		case LT				:	r = codeGenerate(root->Ptr1);
-								codeGenerate(root->Ptr2);
-								fprintf(fp,"LT R%d R%d\n",r,r+1);
+								r = codeGenerate(root->Ptr2);
+								fprintf(fp,"MOV [R%d] R%d\n",r1,r);
+								freeReg();
 								freeReg();
 								
-								return r;
+								return -1;
 		
-		case EQ				:	r = codeGenerate(root->Ptr1);
-								codeGenerate(root->Ptr2);
-								fprintf(fp,"EQ R%d R%d\n",r,r+1);
+		case ADD			:	r1 = codeGenerate(root->Ptr1);
+								r2 = codeGenerate(root->Ptr2);
+								fprintf(fp,"ADD R%d R%d\n",r1,r2);
 								freeReg();
 								
-								return r;
+								return r1;
 		
-		case NE				:	r = codeGenerate(root->Ptr1);
-								codeGenerate(root->Ptr2);
-								fprintf(fp,"NE R%d R%d\n",r,r+1);
+		case SUB			:	r1 = codeGenerate(root->Ptr1);
+								r2 = codeGenerate(root->Ptr2);
+								fprintf(fp,"SUB R%d R%d\n",r1,r2);
 								freeReg();
 								
-								return r;
+								return r1;
 		
-		case NUM			:	r=getReg();
+		case MUL			:	r1 = codeGenerate(root->Ptr1);
+								r2 = codeGenerate(root->Ptr2);
+								fprintf(fp,"MUL R%d R%d\n",r1,r2);
+								freeReg();
+								
+								return r1;
+		
+		case DIV			:	r1 = codeGenerate(root->Ptr1);
+								r2 = codeGenerate(root->Ptr2);
+								fprintf(fp,"DIV R%d R%d\n",r1,r2);
+								freeReg();
+								
+								return r1;
+		
+		case MOD			:	r1 = codeGenerate(root->ptr1);
+								r2 = codeGenerate(root->Ptr2);
+								fprintf(fp,"MOD R%d R%d\n",r1,r2);
+								freeReg();
+								
+								return r1;
+		
+		case GT				:	r1 = codeGenerate(root->Ptr1);
+								r2 = codeGenerate(root->Ptr2);
+								fprintf(fp,"GT R%d R%d\n",r1,r2);
+								freeReg();
+								
+								return r1;
+		
+		case LT				:	r1 = codeGenerate(root->Ptr1);
+								r2 = codeGenerate(root->Ptr2);
+								fprintf(fp,"LT R%d R%d\n",r1,r2);
+								freeReg();
+								
+								return r1;
+		
+		case GTE			:	r1 = codeGenerate(root->Ptr1);
+								r2 = codeGenerate(root->Ptr2);
+								fprintf(fp,"GE R%d R%d\n",r1,r2);
+								freeReg();
+								
+								return r1;
+		
+		case LTE			:	r1 = codeGenerate(root->Ptr1);
+								r2 = codeGenerate(root->Ptr2);
+								fprintf(fp,"LE R%d R%d\n",r1,r2);
+								freeReg();
+								
+								return r1;
+
+		case EQ				:	r1 = codeGenerate(root->Ptr1);
+								r2 = codeGenerate(root->Ptr2);
+								fprintf(fp,"EQ R%d R%d\n",r1,r2);
+								freeReg();
+								
+								return r1;
+		
+		case NE				:	r1 = codeGenerate(root->Ptr1);
+								r2 = codeGenerate(root->Ptr2);
+								fprintf(fp,"NE R%d R%d\n",r1,r2);
+								freeReg();
+								
+								return r1;
+		
+		case And			:	r1 = codeGenerate(root->Ptr1);
+								r2 = codeGenerate(root->Ptr2);
+								fprintf(fp,"MUL R%d R%d\n",r1,r2);
+								
+								return r1;
+		
+		case Or				:	r1 = codeGenerate(root->Ptr1);
+								r2 = codeGenerate(root->Ptr2);
+								fprintf(fp,"ADD R%d R%d\n",r1,r2);
+								
+								return r1;
+		
+		case Not			:	r1 = getReg();
+								r2 = codeGenerate(root->Ptr1);
+								fprintf(fp,"MOV R%d %d\n",r1,1);
+								fprintf(fp,"SUB R%d R%d\n",r1,r2);
+								
+								return r1;
+		
+		case True			:
+		
+		case False			:	r = getReg();
 								fprintf(fp,"MOV R%d %d \n",r,root->VALUE);
 								
 								return r;
 		
-		case ADD			:	r=codeGenerate(root->Ptr1);
-								r1=codeGenerate(root->Ptr2);
-								fprintf(fp,"ADD R%d R%d\n",r,r1);
-								freeReg();
-								
-								return r;
-		
-		case SUB			:	r=codeGenerate(root->Ptr1);
-								r1=codeGenerate(root->Ptr2);
-								fprintf(fp,"SUB R%d R%d\n",r,r1);
-								freeReg();
-								
-								return r;
-		
-		case MUL			:	r=codeGenerate(root->Ptr1);
-								r1=codeGenerate(root->Ptr2);
-								fprintf(fp,"MUL R%d R%d\n",r,r1);
-								freeReg();
-								
-								return r;
-		
-		case DIV			:	r=codeGenerate(root->Ptr1);
-								r1=codeGenerate(root->Ptr2);
-								fprintf(fp,"DIV R%d R%d\n",r,r1);
-								freeReg();
-								
-								return r;
-		
 		case IDFR			:	loc = Glookup(root->NAME)->LOCATION;
-								r=getReg();
-								fprintf(fp,"MOV R%d [%d]\n",r,loc);
-								
-								return r;
-		
-		case ARRAYIDFR		:	r = codeGenerate(root->Ptr1);
-								loc = Glookup(root->NAME)->LOCATION;
 								r1 = getReg();
-								fprintf(fp,"MOV R%d %d\n",r1,loc);
-								fprintf(fp,"ADD R%d R%d\n",r,r1);
-								fprintf(fp,"MOV R%d [R%d]\n",r1,r);
-								freeReg();
+								fprintf(fp,"MOV R%d [%d]\n",r1,loc);
 								
 								return r1;
+		
+		case ARRAYIDFR		:	r1 = codeGenerate(root->Ptr1);
+								loc = Glookup(root->NAME)->LOCATION;
+								r2 = getReg();
+								fprintf(fp,"MOV R%d %d\n",r2,loc);
+								fprintf(fp,"ADD R%d R%d\n",r1,r2);
+								fprintf(fp,"MOV R%d [R%d]\n",r2,r1);
+								freeReg();
+								
+								return r2;
+		
+		case NUM			:	r = getReg();
+								fprintf(fp,"MOV R%d %d \n",r,root->VALUE);
+								
+								return r;
 	}
 }
 
 int getReg()
 {
-	return regcnt++;
+	return ++regcnt;
 }
 
 void freeReg()
