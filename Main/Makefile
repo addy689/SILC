@@ -1,9 +1,21 @@
 all:	sil
 
-sil: SIL.tab.c compilerLib.o
-	gcc $(CFLAGS) -o sil SIL.tab.c -ll compilerLib.o
+sil: SIL.tab.c startCompile.o compilerLib.o semanticChecks.o interpret.o codeGen.o
+	gcc $(CFLAGS) -o sil SIL.tab.c -ll *.o
 
-compilerLib.o: ../SILCompiler/compilerLib.c ../SILCompiler/compilerLib.h
+startCompile.o: ../SILCompiler/startCompile.c
+		gcc $(CFLAGS) -c ../SILCompiler/startCompile.c
+
+codeGen.o: ../SILCompiler/codeGen.c
+	gcc $(CFLAGS) -c ../SILCompiler/codeGen.c
+
+interpret.o: ../SILCompiler/interpret.c
+	gcc $(CFLAGS) -c ../SILCompiler/interpret.c
+
+semanticChecks.o: ../SILCompiler/semanticChecks.c
+	gcc $(CFLAGS) -c ../SILCompiler/semanticChecks.c
+
+compilerLib.o: ../SILCompiler/compilerLib.c
 	gcc $(CFLAGS) -c ../SILCompiler/compilerLib.c
 
 SIL.tab.c: ../SILCompiler/LexYaccFiles/SIL.y lex.yy.c

@@ -2,6 +2,9 @@
 * Copyright (C) <2012> Addy Singh <addy689@gmail.com>
 */
 
+#ifndef COMPILERLIB_H
+#define COMPILERLIB_H
+
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
@@ -55,6 +58,8 @@
 #define IDALIASARG 42
 #define IDADDR 43
 
+#define INTERPRET 45
+#define CODEGEN 46
 
 
 /*############# STRUCTURE DECLARATIONS ################*/
@@ -83,8 +88,8 @@ struct Gsymbol {
 	char *NAME;				//Name of the Identifier
 	int TYPE;				//TYPE can be INTEGER or BOOLEAN
 	int SIZE;				//Size field for arrays
-	int *BINDING;			//Address of the Identifier in Memory
-	int LOCATION;
+	int BINDING;			//Address of the Identifier from base address BP (for SIM code generation only)
+	int *LOCATION;			//Address of the Identifier in Memory (for interpretation only)
 	ArgStruct *ARGLIST;		//Argument List for functions
 	struct Gsymbol *NEXT;	//Pointer to next Symbol Table Entry
 }*Ghead;
@@ -93,7 +98,8 @@ struct Gsymbol {
 struct Lsymbol {
 	char *NAME;				//Name of the Identifier
 	int TYPE;				//TYPE can be INTEGER or BOOLEAN
-	int *BINDING;			//Address of the Identifier in Memory
+	int BINDING;			//Address of the Identifier from base address BP (for SIM code generation only)
+	int *LOCATION;			//Address of the Identifier in Memory (for interpretation only)
 	struct Lsymbol *NEXT;	//Pointer to next Symbol Table Entry
 }*Lhead;
 
@@ -106,98 +112,69 @@ Tnode *TreeCreate(int TYPE,int NODETYPE,char *NAME,int VALUE,Tnode *ArgList,Tnod
 
 
 
-/*############## COMPILE ###############*/
-
-//Compile the SIL source code using the constructed Abstract Syntax Tree 
-void compile(Tnode *gdeclroot,Tnode *fdefroot,Tnode *mainroot);
-
-
-
-/*############# GLOBAL SYMBOL TABLE INSTALLATION & SEMANTIC CHECKING ################*/
+/*############# GLOBAL SYMBOL TABLE INSTALLATION ################*/
 
 //Install all global declarations present in source program into a global symbol table
 void globalInstall(Tnode *root);
 
-//Install function arguments present in global declaration of function into an argument list
-void argInstall(char *NAME,int TYPE);
-
-//Check a function's definition for semantic errors
-int funcSemanticCheck(Tnode *root);
-
-//Installs function arguments into that function's local symbol table (with semantic checking)
-void argLocalInstall(Tnode *root,struct Lsymbol **Lhead);
-
 //Lookup a function argument in the function argument list
 ArgStruct *argLookup(char *NAME,ArgStruct *HEAD);
 
-//Check if function has global declaration, same return type as in global declaration, and no redefinitions
-int funcTypeCheck(Tnode *root);
-
-//Name and Type checking of function arguments against the global declaration
-int funcArgCheck(Tnode *root);
-
-//Check for globally declared functions that do not have a function definition
-void checkFuncDecl(int LINE);
-
-//Install all local declarations (identifiers) present in a function into that function's local symbol table
-void localInstall(Tnode *root,struct Lsymbol **Lhead);
-
-//Check function body for semantic errors (in accordance with the Sinmple Integer Language specification)
-int bodySemanticCheck(Tnode *root,struct Lsymbol **Lhead);
-
-//Check assignment statement ('variable' = 'expression') for type mismatch, given that 'variable' is a local variable
-void checkLocalAssign(Tnode *root,struct Lsymbol *lnode,int t1);
-
-//Check assignment statement ('variable' = 'expression') for type mismatch, given that 'variable' is a global variable
-void checkGlobalAssign(Tnode *root,struct Gsymbol *gnode,int t1);
+//Install function arguments present in global declaration of function into an argument list
+void argInstall(char *NAME,int TYPE);
 
 //Look up an identifier in the global symbol table
 struct Gsymbol *Glookup(char *NAME);
 
 //Install an identifier in the global symbol table
 void Ginstall(char *NAME,int TYPE,int SIZE,ArgStruct *ARGLIST);
-int getLoc();
+
+//Allocate memory to identifiers in the global symbol table (ONLY in Interpretation)
+void Gallocate();
+
+
+
+/*############# LOCAL SYMBOL TABLE INSTALLATION ################*/
+
+//Install all local declarations (identifiers) present in a function into that function's local symbol table
+void localDecInstall(Tnode *root,struct Lsymbol **Lhead);
 
 //Look up an identifier in local symbol table (of a function)
 struct Lsymbol *Llookup(char *NAME,struct Lsymbol **Lhead);
 
 //Install an identifier in the local symbol table (of a function)
-void Linstall(char* NAME, int TYPE,struct Lsymbol **Lhead);
-
-//Allocate memory to identifiers in the global symbol table
-void Gallocate();
-
-
-
-/*############## INTERPRET ###############*/
-int interpreter(Tnode *root,struct Lsymbol **Lhead);
-void localDecInstall(Tnode *root,struct Lsymbol **Lhead);
 void LinstallBind(char *NAME,int TYPE,int VALUE,struct Lsymbol **Lhead);
-Tnode *searchFunc(char *NAME,Tnode *root);
-int evalBody(Tnode *root,struct Lsymbol **Lhead);
 
 
 
-/*############## CODE GENERATION ###############*/
-int codeGenerate(Tnode *root);
+/*############# IDENTIFIER BINDING ALLOCATION ################*/
+int getPositiveLoc();
+int getNegativeLoc();
+
+
+/*############# REGISTER ALLOCATION ################*/
 int getReg();
 void freeReg();
+
+
+/*############# LABEL ALLOCATION (for functions, iterative constructs and conditional statements) ################*/
 int getLabel();
 void freeLabel();
 
 
-
-/*############## DEBUGGING HELP ###############*/
+/*############# DISPLAY GLOBAL & LOCAL SYMBOL TABLE ################*/
 void printLocal(struct Lsymbol **HEAD);
 void printGlobal();
 
 
-
-/*############## GLOBAL VARIABLE DECLARATIONS ###############*/
+/*############# GLOBAL VARIABLE DECLARATIONS ################*/
 Tnode *tempnode,*decnode,*argnode,*funcroot,*mroot;
 struct Gsymbol *gtemp;
 ArgStruct *Arghead,*Argrear;
+int module,status;
 int var,error,line,functype,entry;
 int *binding;
-int loc,regcnt,labelcnt;
+int locpos,locneg,regcnt,labelcnt;
 FILE *fp;
+
+#endif

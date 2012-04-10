@@ -5,7 +5,7 @@
 */
 
 %{
-	#include "../SILCompiler/compilerLib.h"
+	#include "../SILCompiler/startCompile.h"
 %}
 
 %union {	Tnode *T;
