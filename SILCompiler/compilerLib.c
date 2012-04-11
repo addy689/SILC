@@ -254,24 +254,22 @@ void LinstallBind(char *NAME,int TYPE,int VALUE,struct Lsymbol **Lhead)
 	switch(module)
 	{
 		case INTERPRET		:	if(binding == NULL)
-							{
-								Lnode->LOCATION = malloc(sizeof(int));
-								*Lnode->LOCATION = VALUE;
-							}
-							
-							else Lnode->LOCATION = binding;	//For call by reference
-							
-							break;
+								{
+									Lnode->LOCATION = malloc(sizeof(int));
+									*Lnode->LOCATION = VALUE;
+								}
+								
+								else Lnode->LOCATION = binding;	//For call by reference
+								
+								break;
 		
-		case CODEGEN			:	
-/*							if(idstatus = ARGUMENT)*/
-/*							{*/
-/*								if(idcall = CALLBYREF)*/
-/*									Lnode->BINDING = getNegativeLoc();*/
-/*								else Lnode->BINDING = address of calling function's identifier*/
-/*							}*/
-/*							else Lnode->BINDING = getPositiveLoc();*/
-							break;
+		case CODEGEN		:	if(idstatus = ARGUMENT)
+									Lnode->BINDING = getNegativeLoc();
+									
+									//Lnode->BINDING = address of calling function's identifier
+								else Lnode->BINDING = getPositiveLoc();
+								
+								break;
 	}
 	
 	Lnode->NEXT = *Lhead;
@@ -303,7 +301,7 @@ int getPositiveLoc()
 
 int getNegativeLoc()
 {
-	++locneg;
+	--locneg;
 }
 
 int getReg()

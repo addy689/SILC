@@ -57,9 +57,13 @@
 #define FUNCPARAM 41
 #define IDALIASARG 42
 #define IDADDR 43
+#define ARRAYIDADDR 44
+#define ARGUMENT 45
 
-#define INTERPRET 45
-#define CODEGEN 46
+#define INTERPRET 4
+#define CODEGEN 4
+
+
 
 
 /*############# STRUCTURE DECLARATIONS ################*/
@@ -171,9 +175,9 @@ void printGlobal();
 Tnode *tempnode,*decnode,*argnode,*funcroot,*mroot;
 struct Gsymbol *gtemp;
 ArgStruct *Arghead,*Argrear;
-int module,status;
+int module,status,idstatus;
 int var,error,line,functype,entry;
-int *binding;
+int *binding,maxbind;
 int locpos,locneg,regcnt,labelcnt;
 FILE *fp;
 

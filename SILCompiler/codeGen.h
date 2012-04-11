@@ -7,10 +7,8 @@
 
 #include "compilerLib.h"
 
-int funcCodeGen(Tnode *root);
-int funcBodyCodeGen(Tnode *root,struct Lsymbol **Lhead);
+void funcCodeGen(Tnode *root);
 int argInstallLocal(ArgStruct *Arghead,struct Lsymbol **Lhead);
 int codeGenerate(Tnode *root);
 
 #endif
-

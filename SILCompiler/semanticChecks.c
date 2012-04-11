@@ -766,6 +766,8 @@ int bodySemanticCheck(Tnode *root,struct Lsymbol **Lhead)
 								else
 									return gnode->TYPE;
 		
+		case ARRAYIDADDR	:
+		
 		case ARRAYIDFR		:	lnode = Llookup(root->NAME,Lhead);
 								gnode = Glookup(root->NAME);
 								

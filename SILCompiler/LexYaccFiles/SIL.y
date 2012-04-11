@@ -378,6 +378,10 @@ Parameter	:	Expr
 				{	$$ = TreeCreate(0,IDADDR,$2,0,NULL,NULL,NULL,NULL,line);
 					}
 			
+			|	'&' ID '[' Expr ']'
+				{	$$ = TreeCreate(0,ARRAYIDADDR,$2,0,NULL,$4,NULL,NULL,line);
+					}
+			
 			;
 
 %%

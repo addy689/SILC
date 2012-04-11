@@ -55,6 +55,12 @@ int evalBody(Tnode *root,struct Lsymbol **Lhead)
 								
 								return *binding;
 		
+		case ARRAYIDADDR	:	gnode = Glookup(root->NAME);
+								t = evalBody(root->Ptr1);
+								binding = gnode->LOCATION + t;
+								
+								return *binding;
+		
 		case RET			:	return evalBody(root->Ptr1,Lhead);
 		
 		case ITERATIVE		:	while(evalBody(root->Ptr1,Lhead))
