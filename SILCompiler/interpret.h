@@ -10,6 +10,5 @@
 int interpreter(Tnode *root,struct Lsymbol **Lhead);
 int evalBody(Tnode *root,struct Lsymbol **Lhead);
 int funcParamInstall(Tnode *root,struct Lsymbol **Lhead,struct Lsymbol **Ltable);
-Tnode *searchFunc(char *NAME,Tnode *root);
 
 #endif

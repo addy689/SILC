@@ -10,5 +10,7 @@
 void funcCodeGen(Tnode *root);
 int argInstallLocal(ArgStruct *Arghead,struct Lsymbol **Lhead);
 int codeGenerate(Tnode *root);
+void pushLocalVar(struct Lsymbol **Lhead);
+void pushGlobalVar();
 
 #endif

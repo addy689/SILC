@@ -43,7 +43,7 @@ int evalBody(Tnode *root,struct Lsymbol **Lhead)
 								if(Arghead != NULL)
 									funcParamInstall(root->Ptr1,Lhead,&Ltable);
 								
-								tempnode = searchFunc(root->NAME,funcroot);
+								tempnode = funcLookup(root->NAME);
 								return interpreter(tempnode,&Ltable);
 		
 		case IDADDR			:	lnode = Llookup(root->NAME,Lhead);
@@ -56,7 +56,7 @@ int evalBody(Tnode *root,struct Lsymbol **Lhead)
 								return *binding;
 		
 		case ARRAYIDADDR	:	gnode = Glookup(root->NAME);
-								t = evalBody(root->Ptr1);
+								t = evalBody(root->Ptr1,Lhead);
 								binding = gnode->LOCATION + t;
 								
 								return *binding;
@@ -168,25 +168,5 @@ int funcParamInstall(Tnode *root,struct Lsymbol **Lhead,struct Lsymbol **Ltable)
 								LinstallBind(Arghead->NAME,Arghead->TYPE,t,Ltable);
 								Arghead = Arghead->NEXT;
 								return;
-	}
-}
-
-Tnode *searchFunc(char *NAME,Tnode *root)
-{
-	if(!strcmp(NAME,"main"))
-		return mroot;
-	
-	switch(root->NODETYPE)
-	{
-		case CONTINUE		:	tempnode = searchFunc(NAME,root->Ptr1);
-								if(tempnode != NULL)
-									return tempnode;
-								
-								else return searchFunc(NAME,root->Ptr2);
-		
-		case FUNCBLOCK		:	if(!strcmp(NAME,root->NAME))
-									return root;
-								
-								else return NULL;
 	}
 }

@@ -11,11 +11,15 @@ int funcSemanticCheck(Tnode *root);
 void argLocalInstall(Tnode *root,struct Lsymbol **Lhead);
 int funcTypeCheck(Tnode *root);
 int funcArgCheck(Tnode *root);
+void argIdSemanticCheck(Tnode *root,int TYPE);
 void checkFuncDecl(int LINE);
 void localInstall(Tnode *root,struct Lsymbol **Lhead);
 void Linstall(char *NAME,int TYPE,struct Lsymbol **Lhead);
 int bodySemanticCheck(Tnode *root,struct Lsymbol **Lhead);
+int idSemanticCheck(Tnode *root,struct Lsymbol **Lhead);
+int arrayIdSemanticCheck(Tnode *root,struct Lsymbol **Lhead);
 void checkLocalAssign(Tnode *root,struct Lsymbol *lnode,int t1);
 void checkGlobalAssign(Tnode *root,struct Gsymbol *gnode,int t1);
+char *returnTypeString(int TYPE);
 
 #endif

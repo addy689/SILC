@@ -36,6 +36,7 @@ void globalInstall(Tnode *root)
 {
 	struct Gsymbol *gnode;
 	ArgStruct *arg;
+	int typ;
 	
 	if(root == NULL)
 		return;
@@ -58,7 +59,7 @@ void globalInstall(Tnode *root)
 								
 								if(gnode != NULL)
 								{
-									if(root->TYPE != gnode->TYPE)
+									if(decnode->TYPE != gnode->TYPE)
 										printf("\nSIL:%d: Error: conflicting types for '%s'",root->LINE,root->NAME);
 									else
 										printf("\nSIL:%d: Error: redeclaration of '%s'",root->LINE,root->NAME);
@@ -69,7 +70,12 @@ void globalInstall(Tnode *root)
 								globalInstall(root->ArgList);
 								
 								if(gnode == NULL)
+								{
+									if((root->NODETYPE == ARRAYDECL) && (root->VALUE == 0))
+										printf("\nSIL:%d: Warning: size of array '%s' is ZERO",root->LINE,root->NAME);
+									
 									Ginstall(root->NAME,decnode->TYPE,root->VALUE,Arghead);
+								}
 								
 								break;
 		
@@ -78,13 +84,29 @@ void globalInstall(Tnode *root)
 								globalInstall(root->Ptr2);
 								break;
 		
-		case IDALIASARG		:
+		case IDADDRARG		:	typ = returnAddrType(argnode->TYPE);
+								
+								arg = argLookup(root->NAME,Arghead);
+								
+								if(arg != NULL)
+								{
+									if(typ != arg->TYPE)
+										printf("\nSIL:%d: Error: conflicting types for '%s'",root->LINE,root->NAME);
+									else
+										printf("\nSIL:%d: Error: redefinition of parameter '%s'",root->LINE,root->NAME);
+									
+									error++;
+								}
+								
+								else argInstall(root->NAME,typ);
+								
+								break;
 		
 		case IDARG			:	arg = argLookup(root->NAME,Arghead);
 								
 								if(arg != NULL)
 								{
-									if(root->TYPE != arg->TYPE)
+									if(argnode->TYPE != arg->TYPE)
 										printf("\nSIL:%d: Error: conflicting types for '%s'",root->LINE,root->NAME);
 									else
 										printf("\nSIL:%d: Error: redefinition of parameter '%s'",root->LINE,root->NAME);
@@ -167,7 +189,7 @@ struct Gsymbol *Glookup(char *NAME)
 /*	Install an identifier in the global symbol table
 	*/
 void Ginstall(char *NAME,int TYPE,int SIZE,ArgStruct *ARGLIST)
-{	
+{
 	int i;
 	struct Gsymbol *Gnode = malloc(sizeof(struct Gsymbol));
 	
@@ -293,6 +315,74 @@ void Gallocate()
 		Gnode = Gnode->NEXT;
 	}
 }
+
+
+/* Returns appropriate type for identifier addresses
+	*/
+int returnAddrType(int TYPE)
+{
+	if(TYPE == INTGR)
+		return INTGRALIAS;
+	
+	else if(TYPE == BOOL)
+		idtype = BOOLALIAS;
+	
+	else return;
+}
+
+
+/*	Lookup an AST function node in the function nodes list (having head *Funchead)
+	*/
+Tnode *funcLookup(char *NAME)
+{
+	FuncStruct *ptr = Funchead;
+	
+	while(ptr)
+	{
+		if(!strcmp(ptr->FUNCNODE->NAME,NAME))
+			return ptr->FUNCNODE;
+		
+		ptr = ptr->NEXT;
+	}
+	
+	return NULL;
+}
+
+
+/*	Add an AST function node to the function nodes list (having head *Funclist)
+	*/
+void addToFuncList(Tnode *root)
+{
+	Tnode *func;
+	
+	func = funcLookup(root->NAME);
+	
+	if(func != NULL)
+	{
+		if(func->TYPE != root->Ptr1->TYPE)
+			printf("\nSIL:%d: Error: conflicting types for function '%s'",root->LINE,root->NAME);
+		else
+			printf("\nSIL:%d: Error: redefinition of function '%s'",root->LINE,root->NAME);
+		
+		error++;
+	}
+	
+	else funcInstall(root);
+}
+
+
+/*	Install AST function node in function nodes list (having head *Funclist)
+	*/
+void funcInstall(Tnode *func)
+{
+	FuncStruct *Node = malloc(sizeof(FuncStruct));
+	
+	Node->FUNCNODE = func;
+	
+	Node->NEXT = Funchead;
+	Funchead = Node;
+}
+
 
 int getPositiveLoc()
 {

@@ -35,13 +35,11 @@
 
 %%
 Prog		:	GDefblock FdefList Mainblock
-				{	printf("DONE");
-					compile($1,$2,$3);
+				{	compile($1,$2,$3);
 					}
 			
 			|	GDefblock Mainblock
-				{	printf("DONE");
-					compile($1,NULL,$2);
+				{	compile($1,NULL,$2);
 					}
 			
 			;
@@ -190,7 +188,7 @@ ArgId		:	ID
 					}
 			
 			|	'&' ID
-				{	$$ = TreeCreate(0,IDALIASARG,$2,0,NULL,NULL,NULL,NULL,line);
+				{	$$ = TreeCreate(0,IDADDRARG,$2,0,NULL,NULL,NULL,NULL,line);
 					}
 			
 			;

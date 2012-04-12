@@ -1,5 +1,5 @@
 decl
-		integer swap(integer &a,&b);
+		integer swap(integer &a,&b),arr[5];
 enddecl
 
 integer swap(integer &a,&b){
@@ -22,14 +22,14 @@ integer main(){
 	enddecl
 	
 	begin
-		read(x);
-		read(y);
+		read(arr[1]);
+		read(arr[2]);
 		
-		flg = swap(&x,&y);
+		flg = swap(&arr[1],&arr[2]);
 		
 		if(flg==1) then
-			write(x);
-			write(y);
+			write(arr[1]);
+			write(arr[2]);
 		endif;
 		
 		return 1;

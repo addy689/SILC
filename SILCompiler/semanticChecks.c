@@ -24,6 +24,7 @@ int funcSemanticCheck(Tnode *root)
 								return;
 		
 		case FUNCBLOCK		:	argLocalInstall(root->ArgList,&Lhead);
+								addToFuncList(root);
 								
 								gtemp = Glookup(root->NAME);
 								functype = root->Ptr1->TYPE;
@@ -67,7 +68,7 @@ void argLocalInstall(Tnode *root,struct Lsymbol **Lhead)
 {
 	struct Lsymbol *lnode;
 	ArgStruct *arg;
-	char typ[10];
+	int typ;
 	
 	if(root == NULL)
 		return;
@@ -82,7 +83,22 @@ void argLocalInstall(Tnode *root,struct Lsymbol **Lhead)
 								argLocalInstall(root->Ptr2,Lhead);
 								break;
 		
-		case IDALIASARG		:
+		case IDADDRARG		:	typ = returnAddrType(argnode->TYPE);
+								
+								lnode = Llookup(root->NAME,Lhead);
+								if(lnode != NULL)
+								{
+									if(typ != lnode->TYPE)
+										printf("\nSIL:%d: Error: conflicting types for '%s'",root->LINE,root->NAME);
+									else
+										printf("\nSIL:%d: Error: redefinition of parameter '%s'",root->LINE,root->NAME);
+									
+									error++;
+								}
+								
+								else Linstall(root->NAME,typ,Lhead);
+								
+								break;
 		
 		case IDARG			:	lnode = Llookup(root->NAME,Lhead);
 								
@@ -110,7 +126,7 @@ void argLocalInstall(Tnode *root,struct Lsymbol **Lhead)
 	*/
 int funcTypeCheck(Tnode *root)
 {
-	char typ[10];
+	char *typ;
 	
 	if(root == NULL)
 		return;
@@ -125,10 +141,7 @@ int funcTypeCheck(Tnode *root)
 	{
 		if(functype != gtemp->TYPE)
 		{
-			if(gtemp->TYPE == INTGR)
-				strcpy(typ,"integer");
-			else if(gtemp->TYPE == BOOL)
-				strcpy(typ,"boolean");
+			typ = returnTypeString(gtemp->TYPE);
 			
 			printf("\nSIL:%d: Error: function '%s' return type has been declared as '%s' in its global declaration",root->LINE,root->NAME,typ);
 			error++;
@@ -155,8 +168,8 @@ int funcTypeCheck(Tnode *root)
 	*/
 int funcArgCheck(Tnode *root)
 {
+	int typ;
 	ArgStruct *arg;
-	char typ[10];
 	
 	if(root == NULL)
 		return;
@@ -167,39 +180,48 @@ int funcArgCheck(Tnode *root)
 								funcArgCheck(root->Ptr2);
 								return;
 		
-		
 		case ARGSTATEMENT	:	argnode = root->Ptr1;
 								funcArgCheck(root->Ptr2);
 								return;
 		
-		case IDALIASARG		:
-		
-		case IDARG			:	arg = argLookup(root->NAME,gtemp->ARGLIST);
-								
-								if(arg == NULL)
-								{
-									printf("\nSIL:%d: Error: parameter '%s' not declared in global declaration of function '%s'",root->LINE,root->NAME,gtemp->NAME);
-									error++;
-								}
-								
-								else if(arg->FLAG == 0)
-								{
-									if(argnode->TYPE != arg->TYPE)
-									{
-										if(arg->TYPE == INTGR)
-											strcpy(typ,"integer");
-										else if(arg->TYPE == BOOL)
-											strcpy(typ,"boolean");
-										
-										printf("\nSIL:%d: Error: parameter '%s' has type '%s' in global declaration of function '%s'",root->LINE,root->NAME,typ,gtemp->NAME);
-										
-										error++;
-									}
-									
-									arg->FLAG = 1;
-								}
-								
+		case IDADDRARG		:	typ = returnAddrType(argnode->TYPE);
+								argIdSemanticCheck(root,typ);
 								return;
+		
+		case IDARG			:	typ = argnode->TYPE;
+								argIdSemanticCheck(root,typ);
+								return;
+	}
+}
+
+
+/*	Check a function argument for semantic errors
+	*/
+void argIdSemanticCheck(Tnode *root,int TYPE)
+{
+	char *typ;
+	ArgStruct *arg;
+	
+	arg = argLookup(root->NAME,gtemp->ARGLIST);
+	
+	if(arg == NULL)
+	{
+		printf("\nSIL:%d: Error: parameter '%s' not declared in global declaration of function '%s'",root->LINE,root->NAME,gtemp->NAME);
+		error++;
+	}
+	
+	else if(arg->FLAG == 0)
+	{
+		if(TYPE != arg->TYPE)
+		{
+			typ = returnTypeString(arg->TYPE);
+			
+			printf("\nSIL:%d: Error: parameter '%s' has type '%s' in global declaration of function '%s'",root->LINE,root->NAME,typ,gtemp->NAME);
+			
+			error++;
+		}
+		
+		arg->FLAG = 1;
 	}
 }
 
@@ -296,7 +318,7 @@ void Linstall(char *NAME,int TYPE,struct Lsymbol **Lhead)
 int bodySemanticCheck(Tnode *root,struct Lsymbol **Lhead)
 {
 	int t1,t2;
-	char typ1[10],typ2[10];
+	char *typ1,*typ2;
 	struct Lsymbol *lnode;
 	struct Gsymbol *gnode;
 	static struct Gsymbol *gfunc;
@@ -314,15 +336,8 @@ int bodySemanticCheck(Tnode *root,struct Lsymbol **Lhead)
 		
 		case RET			:	t1 = bodySemanticCheck(root->Ptr1,Lhead);
 								
-								if(functype == INTGR)
-									strcpy(typ1,"integer");
-								else if(functype == BOOL)
-									strcpy(typ1,"boolean");
-								
-								if(t1 == INTGR)
-									strcpy(typ2,"integer");
-								else if(t1 == BOOL)
-									strcpy(typ2,"boolean");
+								typ1 = returnTypeString(functype);
+								typ2 = returnTypeString(t1);
 								
 								if(functype != t1)
 								{
@@ -361,7 +376,7 @@ int bodySemanticCheck(Tnode *root,struct Lsymbol **Lhead)
 								return gtemp->TYPE;
 		
 		case FUNCPARAM		:	paramcnt++;
-		
+								
 								t1 = bodySemanticCheck(root->Ptr1,Lhead);
 								
 								if(Ahead == NULL)
@@ -369,10 +384,7 @@ int bodySemanticCheck(Tnode *root,struct Lsymbol **Lhead)
 								
 								if(t1 != Ahead->TYPE)
 								{
-									if(Ahead->TYPE == INTGR)
-										strcpy(typ1,"integer");
-									else if(Ahead->TYPE == BOOL)
-										strcpy(typ1,"boolean");
+									typ1 = returnTypeString(Ahead->TYPE);
 									
 									printf("\nSIL:%d: Error: incompatible type for argument %d of '%s'; expected argument of type '%s'",root->LINE,argcnt+1,gfunc->NAME,typ1);
 									
@@ -743,66 +755,69 @@ int bodySemanticCheck(Tnode *root,struct Lsymbol **Lhead)
 		
 		case False			:	return root->TYPE;
 		
-		case IDADDR			:
-		
-		case IDFR			:	lnode = Llookup(root->NAME,Lhead);
-								gnode = Glookup(root->NAME);
+		case IDFR			:	t1 = idSemanticCheck(root,Lhead);
 								
-								if((lnode == NULL) && (gnode == NULL))
+								if(t1 == LOCAL)
 								{
-									printf("\nSIL:%d: Error: '%s' is an undeclared identifier",root->LINE,root->NAME);
-									error++;
-									return 0;
-								}
-								
-								else if((lnode == NULL) && (gnode != NULL) && (gnode->SIZE > 0))
-								{
-									printf("\nSIL:%d: Error: '%s' has been globally declared as an array",root->LINE,root->NAME);
-									error++;
-								}
-								
-								if(lnode != NULL)
+									lnode = Llookup(root->NAME,Lhead);
 									return lnode->TYPE;
-								else
+								}
+								
+								else if(t1 == GLOBAL)
+								{
+									gnode = Glookup(root->NAME);
 									return gnode->TYPE;
-		
-		case ARRAYIDADDR	:
-		
-		case ARRAYIDFR		:	lnode = Llookup(root->NAME,Lhead);
-								gnode = Glookup(root->NAME);
-								
-								if((lnode == NULL) && (gnode == NULL))
-								{
-									printf("\nSIL:%d: Error: '%s' is an undeclared identifier",root->LINE,root->NAME);
-									error++;
 								}
 								
-								else
+								else return 0;
+		
+		case ARRAYIDFR		:	t1 = arrayIdSemanticCheck(root,Lhead);
+								
+								if(t1 == LOCAL)
 								{
-									t1 = bodySemanticCheck(root->Ptr1,Lhead);
-									
-									if(t1 != 0)
-									{
-										if((t1 != INTGR))
-										{
-											printf("\nSIL:%d: Error: array subscript is not an integer",root->LINE);
-											error++;
-										}
-									
-										if((lnode != NULL) || (gnode->SIZE == 0))
-										{
-											printf("\nSIL:%d: Error: subscripted value is not an array",root->LINE);
-											error ++;
-										}
-										
-										if(lnode != NULL)
-											return lnode->TYPE;
-										else
-											return gnode->TYPE;
-									}
+									lnode = Llookup(root->NAME,Lhead);
+									return lnode->TYPE;
 								}
 								
-								return 0;
+								else if(t1 == GLOBAL)
+								{
+									gnode = Glookup(root->NAME);
+									return gnode->TYPE;
+								}
+								
+								else return 0;
+		
+		case IDADDR			:	t1 = idSemanticCheck(root,Lhead);
+								
+								if(t1 == LOCAL)
+								{
+									lnode = Llookup(root->NAME,Lhead);
+									return returnAddrType(lnode->TYPE);
+								}
+								
+								else if(t1 == GLOBAL)
+								{
+									gnode = Glookup(root->NAME);
+									return returnAddrType(gnode->TYPE);
+								}
+								
+								else return 0;
+		
+		case ARRAYIDADDR	:	t1 = arrayIdSemanticCheck(root,Lhead);
+								
+								if(t1 == LOCAL)
+								{
+									lnode = Llookup(root->NAME,Lhead);
+									return returnAddrType(lnode->TYPE);
+								}
+								
+								else if(t1 == GLOBAL)
+								{
+									gnode = Glookup(root->NAME);
+									return returnAddrType(gnode->TYPE);
+								}
+								
+								else return 0;
 		
 		case NUM			:	return INTGR;
 		
@@ -811,25 +826,101 @@ int bodySemanticCheck(Tnode *root,struct Lsymbol **Lhead)
 }
 
 
+/*	Check for local/global declaration of an identifier
+	*/
+int idSemanticCheck(Tnode *root,struct Lsymbol **Lhead)
+{
+	struct Lsymbol *lnode;
+	struct Gsymbol *gnode;
+	
+	lnode = Llookup(root->NAME,Lhead);
+	gnode = Glookup(root->NAME);
+	
+	if((lnode == NULL) && (gnode == NULL))
+	{
+		printf("\nSIL:%d: Error: '%s' is an undeclared identifier",root->LINE,root->NAME);
+		error++;
+		return 0;
+	}
+	
+	else if((lnode == NULL) && (gnode != NULL) && (gnode->SIZE > 0))
+	{
+		printf("\nSIL:%d: Error: '%s' has been globally declared as an array",root->LINE,root->NAME);
+		error++;
+	}
+	
+	if(lnode != NULL)
+		return LOCAL;
+	else
+		return GLOBAL;
+}
+
+
+/*	Check for local/global declaration of an array identifier
+	*/
+int arrayIdSemanticCheck(Tnode *root,struct Lsymbol **Lhead)
+{
+	int t1;
+	struct Lsymbol *lnode;
+	struct Gsymbol *gnode;
+	
+	lnode = Llookup(root->NAME,Lhead);
+	gnode = Glookup(root->NAME);
+	
+	if((lnode == NULL) && (gnode == NULL))
+	{
+		printf("\nSIL:%d: Error: '%s' is an undeclared identifier",root->LINE,root->NAME);
+		error++;
+	}
+	
+	else if((lnode != NULL) || (gnode->SIZE == 0))
+	{
+		printf("\nSIL:%d: Error: subscripted value is not an array",root->LINE);
+		error ++;
+	}
+	
+	t1 = bodySemanticCheck(root->Ptr1,Lhead);
+	
+	if((t1 != 0) && (t1 != INTGR))
+	{
+		printf("\nSIL:%d: Error: array subscript is not an integer",root->LINE);
+		error++;
+	}
+	
+	if(lnode != NULL)
+		return LOCAL;
+	else if(gnode!= NULL)
+		return GLOBAL;
+	else return 0;
+}
+
+
 /*	Check assignment statement ('variable' = 'expression') for type mismatch,
 	given that 'variable' is a local variable
 	*/
-void checkLocalAssign(Tnode *root,struct Lsymbol *lnode,int t1)
+void checkLocalAssign(Tnode *root,struct Lsymbol *lnode,int exprtype)
 {
-	char typ1[10],typ2[10];
+	char *typ1,*typ2;
+	int t1,t2;
+	int cond1,cond2;
 	
-	if(lnode->TYPE == INTGR)
-		strcpy(typ1,"integer");
-	else if(lnode->TYPE == BOOL)
-		strcpy(typ1,"boolean");
-
-	if(t1 == INTGR)
-		strcpy(typ2,"integer");
-	else if(t1 == BOOL)
-		strcpy(typ2,"boolean");
-
-	if((t1 != lnode->TYPE) && (t1 != 0))
+	cond1 = (lnode->TYPE == INTGR || lnode->TYPE == INTGRALIAS);
+	cond2 = (exprtype == INTGR) || (exprtype == INTGRALIAS);
+	
+	if(cond1)
+		t1 = INTGR;
+	else t1 = BOOL;
+	
+	if(cond2)
+		t2 = INTGR;
+	else t2 = BOOL;
+	
+	
+	if((t1 != t2) && (exprtype != 0))
 	{
+		typ1 = returnTypeString(t1);
+		typ2 = returnTypeString(t2);
+		
 		printf("\nSIL:%d: Error: cannot assign '%s' value to '%s' variable",root->LINE,typ2,typ1);
 		error++;
 	}
@@ -839,23 +930,48 @@ void checkLocalAssign(Tnode *root,struct Lsymbol *lnode,int t1)
 /*	Check assignment statement ('variable' = 'expression') for type mismatch,
 	given that 'variable' is a global variable
 	*/
-void checkGlobalAssign(Tnode *root,struct Gsymbol *gnode,int t1)
+void checkGlobalAssign(Tnode *root,struct Gsymbol *gnode,int exprtype)
 {
-	char typ1[10],typ2[10];
+	char *typ1,*typ2;
+	int t1,t2;
+	int cond1,cond2;
 	
-	if(gnode->TYPE == INTGR)
-		strcpy(typ1,"integer");
-	else if(gnode->TYPE == BOOL)
-		strcpy(typ1,"boolean");
-
-	if(t1 == INTGR)
-		strcpy(typ2,"integer");
-	else if(t1 == BOOL)
-		strcpy(typ2,"boolean");
-
-	if((t1 != gnode->TYPE) && (t1 != 0))
+	cond1 = (gnode->TYPE == INTGR || gnode->TYPE == INTGRALIAS);
+	cond2 = (exprtype == INTGR) || (exprtype == INTGRALIAS);
+	
+	if(cond1)
+		t1 = INTGR;
+	else t1 = BOOL;
+	
+	if(cond2)
+		t2 = INTGR;
+	else t2 = BOOL;
+	
+	
+	if((t1 != t2) && (exprtype != 0))
 	{
+		typ1 = returnTypeString(t1);
+		typ2 = returnTypeString(t2);
+		
 		printf("\nSIL:%d: Error: cannot assign '%s' value to '%s' variable",root->LINE,typ2,typ1);
 		error++;
 	}
+}
+
+
+/* Returns appropriate type as string
+	*/
+char *returnTypeString(int TYPE)
+{
+	if(TYPE == INTGR)
+		return "integer";
+	
+	else if(TYPE == BOOL)
+		return "boolean";
+	
+	else if(TYPE == INTGRALIAS)
+		return "integer address";
+	
+	else if(TYPE == BOOLALIAS)
+		return "boolean address";
 }

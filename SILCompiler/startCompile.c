@@ -18,7 +18,6 @@ void compile(Tnode *gdeclroot,Tnode *fdefroot,Tnode *mainroot)
 	locpos = -1;
 	labelcnt = 0;
 	globalInstall(gdeclroot);
-	maxbind = locpos;
 	
 	if(fdefroot != NULL)
 	{
@@ -39,13 +38,13 @@ void compile(Tnode *gdeclroot,Tnode *fdefroot,Tnode *mainroot)
 		Ltable = NULL;
 		interpreter(mainroot,&Ltable);
 		
-		module = CODEGEN;
-		fp = fopen("SIMCode","w");
-		regcnt = 0;
-		fprintf("START\n");
-		funcCodeGen(fdefroot);
-		funcCodeGen(mainroot);
-		fprintf("HALT\n");
-		fclose(fp);
+/*		module = CODEGEN;*/
+/*		fp = fopen("SIMCode","w");*/
+/*		regcnt = 0;*/
+/*		fprintf(fp,"START\n");*/
+/*		funcCodeGen(fdefroot);*/
+/*		funcCodeGen(mainroot);*/
+/*		fprintf(fp,"HALT\n");*/
+/*		fclose(fp);*/
 	}
 }

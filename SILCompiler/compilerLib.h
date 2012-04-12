@@ -44,7 +44,11 @@
 #define ARRAYDECL 30
 #define INTGR 31
 #define BOOL 32
+#define INTGRALIAS 48
+#define BOOLALIAS 49
 #define DATATYPE 33
+#define LOCAL 50
+#define GLOBAL 51
 
 #define IDARG 34
 #define ARGSTATEMENT 35
@@ -55,14 +59,13 @@
 #define RET 39
 #define FUNCCALL 40
 #define FUNCPARAM 41
-#define IDALIASARG 42
+#define IDADDRARG 42
 #define IDADDR 43
 #define ARRAYIDADDR 44
 #define ARGUMENT 45
 
-#define INTERPRET 4
-#define CODEGEN 4
-
+#define INTERPRET 46
+#define CODEGEN 47
 
 
 
@@ -107,6 +110,12 @@ struct Lsymbol {
 	struct Lsymbol *NEXT;	//Pointer to next Symbol Table Entry
 }*Lhead;
 
+//Node structure for holding the pointers to all AST function nodes
+typedef struct funcstruct {
+		Tnode *FUNCNODE;
+		struct funcstruct *NEXT;
+	}FuncStruct;
+
 
 
 /*############# CREATE AST NODE ################*/
@@ -135,6 +144,21 @@ void Ginstall(char *NAME,int TYPE,int SIZE,ArgStruct *ARGLIST);
 
 //Allocate memory to identifiers in the global symbol table (ONLY in Interpretation)
 void Gallocate();
+
+//Returns appropriate type for identifier addresses
+int returnAddrType(int TYPE);
+
+
+/*############# AST FUNCTION NODES MANAGEMENT (for faster access to a function body in the AST) ################*/
+
+//Lookup an AST function node in the function nodes list (having head *Funchead)
+Tnode *funcLookup(char *NAME);
+
+//Add an AST function node to the function nodes list (having head *Funclist)
+void addToFuncList(Tnode *root);
+
+//Install AST function node in function nodes list (having head *Funclist)
+void funcInstall(Tnode *func);
 
 
 
@@ -173,11 +197,12 @@ void printGlobal();
 
 /*############# GLOBAL VARIABLE DECLARATIONS ################*/
 Tnode *tempnode,*decnode,*argnode,*funcroot,*mroot;
+FuncStruct *Funchead;
 struct Gsymbol *gtemp;
 ArgStruct *Arghead,*Argrear;
-int module,status,idstatus;
+int module,status,idstatus,idtype;
 int var,error,line,functype,entry;
-int *binding,maxbind;
+int *binding;
 int locpos,locneg,regcnt,labelcnt;
 FILE *fp;
 

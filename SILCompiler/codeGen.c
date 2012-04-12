@@ -20,21 +20,28 @@ void funcCodeGen(Tnode *root)
 		
 		case FUNCBLOCK		:	gnode = Glookup(root->NAME);
 								
-								locneg = 0;
+								locneg = -2;
 								argInstallLocal(gnode->ARGLIST,&Lhead);
 								
 								locpos = 0;
+								idstatus = 0;
 								localDecInstall(root->Ptr2,&Lhead);
 								
 								fprintf("fp,Label%d:\n",gnode->BINDING);
 								codeGenerate(root->Ptr3);
-		
-		case MAINBLOCK		:	locpos = -1;
-								localDecInstall(root->Ptr1,&Lhead);
 								
-								fprintf(fp,"MOV SP %d",maxbind);
+								return;
+		
+		case MAINBLOCK		:	fprintf(fp,"MOV SP -1");
+								pushGlobalVar();
+								
 								fprintf(fp,"MOV BP SP");
 								fprintf(fp,"PUSH BP");
+								
+								locpos = -1;
+								localDecInstall(root->Ptr1,&Lhead);
+								
+								pushLocalVar(&Lhead);
 								
 								regcnt = 0;
 								codeGenerate(root->Ptr2,&Lhead);
@@ -56,11 +63,33 @@ void argInstallLocal(ArgStruct *HEAD,struct Lsymbol **Lhead)
 	}
 }
 
-int codeGenerate(Tnode *root)
+void pushAllRegs()
+{
+	int i = 0;
+	
+	while(i <= regcnt)
+	{
+		fprintf(fp,"PUSH R%d\n",i);
+		i++;
+	}
+}
+
+void funcCodeGen(char *NAME)
+{
+	struct Tnode *node;
+	
+	
+	
+	fprintf("fp,Label%d:\n",gnode->BINDING);
+	codeGenerate(node->);
+}
+
+int codeGenerate(Tnode *root,struct Lsymbol **Lhead)
 {
 	int loc,r,r1,r2;
 	int lbl1,lbl2;
 	struct Gsymbol *gnode;
+	struct Lsymbol *lnode;
 	
 	if(root==NULL)
 		return;
@@ -72,18 +101,15 @@ int codeGenerate(Tnode *root)
 								
 								return;
 		
-		case FUNCCALL		:	gnode = Glookup(root->NAME);
-								Arghead = gnode->ARGLIST;
+		case FUNCCALL		:	pushAllRegs();
 								
-								struct Lsymbol *Ltable;
-								Ltable = NULL;
+								pushCallParams(root->Ptr1,Lhead);
 								
-								if(Arghead != NULL)
-									funcParamInstall(root->Ptr1,Lhead,&Ltable);
+								CALL LABEL 1;
 								
-								tempnode = searchFunc(root->NAME,funcroot);
-								return interpreter(tempnode,&Ltable);
+								return;
 		
+		//Call by Reference
 		case IDADDR			:	lnode = Llookup(root->NAME,Lhead);
 								gnode = Glookup(root->NAME);
 								
@@ -308,5 +334,63 @@ int codeGenerate(Tnode *root)
 								fprintf(fp,"MOV R%d %d \n",r,root->VALUE);
 								
 								return r;
+	}
+}
+
+void pushGlobalVar()
+{
+	struct Gsymbol *ptr = Ghead;
+	int i;
+	
+	while(ptr)
+	{	
+		if(ptr->SIZE >= 0)
+		{
+			i = 0;
+			do{
+				r = getReg();
+				fprintf(fp,"PUSH R%d\n",r);
+				freeReg();
+			}while(i++ < ptr->SIZE);
+		}
+	
+		ptr = ptr->NEXT;
+	}
+}
+
+void pushLocalVar(&Lhead)
+{
+	struct Lsymbol *ptr = Lhead;
+	
+	while(ptr)
+	{
+		r = getReg();
+		fprintf(fp,"PUSH R%d\n",r);
+		freeReg();
+	
+		ptr = ptr->NEXT;
+	}
+}
+
+/*	Push function call parameters in reverse
+	*/
+void pushCallParams(Tnode *root,struct Lsymbol **Lhead)
+{
+	if(root == NULL)
+		return;
+	
+	switch(root->NODETYPE)
+	{
+		case CONTINUE		:	pushCallParams(root->Ptr2,Lhead);
+								pushCallParams(root->Ptr1,Lhead);
+								break;
+		
+		case FUNCPARAM		:	r1 = codeGenerate(root->Ptr1,Lhead);
+								r2 = getReg();
+								fprintf(fp,"MOV R%d R%d\n",r2,r1);
+								fprintf(fp,"PUSH R%d\n",r2);
+								freeReg();
+								freeReg();
+								break;
 	}
 }
