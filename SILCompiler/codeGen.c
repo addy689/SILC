@@ -12,6 +12,9 @@ void funcCodeGen(Tnode *root)
 	
 	Lhead = NULL;
 	
+	if(root == NULL)
+		return;
+	
 	switch(root->NODETYPE)
 	{
 		case CONTINUE		:	funcCodeGen(root->Ptr1);
@@ -27,24 +30,32 @@ void funcCodeGen(Tnode *root)
 								idstatus = 0;
 								localDecInstall(root->Ptr2,&Lhead);
 								
-								fprintf("fp,Label%d:\n",gnode->BINDING);
-								codeGenerate(root->Ptr3);
+								fprintf(fp,"\nLABEL%d:\n",gnode->BINDING);
+								fprintf(fp,"PUSH BP\n");
+								fprintf(fp,"MOV BP SP\n");
+								
+								pushLocalVar(&Lhead);
+								codeGenerate(root->Ptr3,&Lhead);
 								
 								return;
 		
-		case MAINBLOCK		:	fprintf(fp,"MOV SP -1");
+		case MAINBLOCK		:	fprintf(fp,"START\n");
+								fprintf(fp,"MOV SP -1\n");
 								pushGlobalVar();
 								
-								fprintf(fp,"MOV BP SP");
-								fprintf(fp,"PUSH BP");
+								fprintf(fp,"PUSH BP\n");
+								fprintf(fp,"MOV BP SP\n");
 								
 								locpos = -1;
 								localDecInstall(root->Ptr1,&Lhead);
 								
 								pushLocalVar(&Lhead);
 								
-								regcnt = 0;
+								regcnt = -1;
 								codeGenerate(root->Ptr2,&Lhead);
+								fprintf(fp,"HALT\n");
+								
+								return;
 	}
 }
 
@@ -54,35 +65,16 @@ void funcCodeGen(Tnode *root)
 void argInstallLocal(ArgStruct *HEAD,struct Lsymbol **Lhead)
 {
 	ArgStruct *ptr = HEAD;
+	int garbval;
 	
 	idstatus = ARGUMENT;
 	while(ptr)
 	{
-		LinstallBind(ptr->NAME,ptr->TYPE,Lhead);
+		LinstallBind(ptr->NAME,ptr->TYPE,garbval,Lhead);
 		ptr = ptr->NEXT;
 	}
 }
 
-void pushAllRegs()
-{
-	int i = 0;
-	
-	while(i <= regcnt)
-	{
-		fprintf(fp,"PUSH R%d\n",i);
-		i++;
-	}
-}
-
-void funcCodeGen(char *NAME)
-{
-	struct Tnode *node;
-	
-	
-	
-	fprintf("fp,Label%d:\n",gnode->BINDING);
-	codeGenerate(node->);
-}
 
 int codeGenerate(Tnode *root,struct Lsymbol **Lhead)
 {
@@ -96,73 +88,110 @@ int codeGenerate(Tnode *root,struct Lsymbol **Lhead)
 	
 	switch(root->NODETYPE)
 	{
-		case CONTINUE		:	codeGenerate(root->Ptr1);
-								codeGenerate(root->Ptr2);
+		case CONTINUE		:	codeGenerate(root->Ptr1,Lhead);
+								codeGenerate(root->Ptr2,Lhead);
 								
 								return;
 		
 		case FUNCCALL		:	pushAllRegs();
-								
+								int rc = regcnt;
 								pushCallParams(root->Ptr1,Lhead);
 								
-								CALL LABEL 1;
+								r = getReg();
+								fprintf(fp,"PUSH R%d\n",r);
+								freeReg();
 								
-								return;
+								gnode = Glookup(root->NAME);
+								fprintf(fp,"CALL LABEL%d\n",gnode->BINDING);
+								
+								r = getReg();
+								fprintf(fp,"MOV R%d SP\n",r);
+								
+								popAllArgs(gnode->ARGLIST);
+								restoreRegs(rc);
+								
+								return r;
 		
 		//Call by Reference
-		case IDADDR			:	lnode = Llookup(root->NAME,Lhead);
-								gnode = Glookup(root->NAME);
-								
-								if(lnode != NULL)
-									binding = lnode->BINDING;
-								else binding = gnode->BINDING;
-								
-								return *binding;
+/*		case IDADDR			:	lnode = Llookup(root->NAME,Lhead);*/
+/*								gnode = Glookup(root->NAME);*/
+/*								*/
+/*								if(lnode != NULL)*/
+/*									binding = lnode->LOCATION;*/
+/*								else binding = gnode->LOCATION;*/
+/*								*/
+/*								return *binding;*/
+/*		*/
+/*		case ARRAYIDADDR	:	gnode = Glookup(root->NAME);*/
+/*								t = evalBody(root->Ptr1,Lhead);*/
+/*								binding = gnode->LOCATION + t;*/
+/*								*/
+/*								return *binding;*/
 		
-		case RET			:	return evalBody(root->Ptr1,Lhead);
-		
-		case ITERATIVE		:	fprintf(fp,"\n*** ITERATION ***\n");
-								lbl1 = getLabel();
-								lbl2 = getLabel();
-								fprintf(fp,"Label%d:\n",lbl1);
-								r = codeGenerate(root ->Ptr1);
-								fprintf(fp,"JZ R%d Label%d\n",r,lbl2);
+		case RET			:	r1 = getReg();
+								r2 = getReg();
+								fprintf(fp,"MOV R%d BP\n",r1);
+								fprintf(fp,"MOV R%d 2\n",r2);
+								fprintf(fp,"SUB R%d R%d\n",r1,r2);
+								fprintf(fp,"MOV [R%d] R0\n",r1);
 								freeReg();
-								codeGenerate(root ->Ptr2);
-								fprintf(fp,"JMP Label%d\n",lbl1);
-								fprintf(fp,"Label%d:\n",lbl2);
+								freeReg();
+								freeReg();
+								
+								fprintf(fp,"POP BP");
+								fprintf(fp,"RET");
 								
 								return;
 		
-		case CONDITIONAL	:	fprintf(fp,"\n*** CONDITIONAL ***\n");
-								r = codeGenerate(root->Ptr1);
-								lbl1 = getLabel();
+		case ITERATIVE		:	lbl1 = getLabel();
 								lbl2 = getLabel();
 								
-								fprintf(fp,"JZ R%d Label%d\n",r,lbl1);
+								fprintf(fp,"LABEL%d:\n",lbl1);
+								
+								r = codeGenerate(root->Ptr1,Lhead);
+								fprintf(fp,"JZ R%d LABEL%d\n",r,lbl2);
 								freeReg();
-								codeGenerate(root->Ptr2);
-								fprintf(fp,"JMP Label%d\n",lbl2);
-								fprintf(fp,"Label%d:\n",lbl1);
-								codeGenerate(root->Ptr3);
-								fprintf(fp,"Label%d:\n",lbl2);
+								
+								codeGenerate(root->Ptr2,Lhead);
+								
+								fprintf(fp,"JMP LABEL%d\n",lbl1);
+								fprintf(fp,"LABEL%d:\n",lbl2);
 								
 								return;
 		
-		case RD				:	fprintf(fp,"\n*** READ ***\n");
-								loc = Glookup(root->NAME)->BINDING;
-								r = getReg();
+		case CONDITIONAL	:	r = codeGenerate(root->Ptr1,Lhead);
+								
+								lbl1 = getLabel();
+								lbl2 = getLabel();
+								fprintf(fp,"JZ R%d LABEL%d\n",r,lbl1);
+								freeReg();
+								
+								codeGenerate(root->Ptr2,Lhead);
+								fprintf(fp,"JMP LABEL%d\n",lbl2);
+								
+								fprintf(fp,"LABEL%d:\n",lbl1);
+								codeGenerate(root->Ptr3,Lhead);
+								
+								fprintf(fp,"LABEL%d:\n",lbl2);
+								
+								return;
+		
+		case RD				:	r = getReg();
 								fprintf(fp,"IN R%d\n",r);
-								fprintf(fp,"MOV [%d] R%d\n",loc,r);
+								
+								loc = lookupBinding(root->NAME,Lhead);
+								fprintf(fp,"MOV [R%d] R%d\n",loc,r);
+								freeReg();
 								freeReg();
 								
 								return -1;
 		
-		case ARRAYRD		:	fprintf(fp,"\n*** ARRAY READ ***\n");
-								r = getReg();
+		case ARRAYRD		:	r = getReg();
 								fprintf(fp,"IN R%d\n",r);
+								
 								loc = Glookup(root->NAME)->BINDING;
-								r1 = codeGenerate(root->Ptr1);
+								r1 = codeGenerate(root->Ptr1,Lhead);
+								
 								r2 = getReg();
 								fprintf(fp,"MOV R%d %d\n",r2,loc);
 								fprintf(fp,"ADD R%d R%d\n",r1,r2);
@@ -174,127 +203,126 @@ int codeGenerate(Tnode *root,struct Lsymbol **Lhead)
 								
 								return -1;
 		
-		case WRIT			:	fprintf(fp,"\n*** WRITE ***\n");
-								r = codeGenerate(root->Ptr1);
+		case WRIT			:	r = codeGenerate(root->Ptr1,Lhead);
 								fprintf(fp,"OUT R%d\n",r);
 								freeReg();
 								
 								return -1;
 		
-		case ASSIGN			:	fprintf(fp,"\n*** ASSIGNMENT ***\n");
-								loc = Glookup(root->NAME)->BINDING;
-								r = codeGenerate(root->Ptr1);
-								fprintf(fp,"MOV [%d] R%d\n",loc,r);
+		case ASSIGN			:	loc = lookupBinding(root->NAME,Lhead);
+								r = codeGenerate(root->Ptr1,Lhead);
+								fprintf(fp,"MOV [R%d] R%d\n",loc,r);
+								freeReg();
 								freeReg();
 								
 								return;
 		
-		case ARRAYASSIGN	:	fprintf(fp,"\n*** ARRAY ASSIGNMENT ***\n");
-								loc = Glookup(root->NAME)->BINDING;
-								r1 = codeGenerate(root->Ptr1);
+		case ARRAYASSIGN	:	loc = Glookup(root->NAME)->BINDING;
+								r1 = codeGenerate(root->Ptr1,Lhead);
+								
 								r2 = getReg();
 								fprintf(fp,"MOV R%d %d\n",r2,loc);
 								fprintf(fp,"ADD R%d R%d\n",r1,r2);
 								freeReg();
 								
-								r = codeGenerate(root->Ptr2);
+								r = codeGenerate(root->Ptr2,Lhead);
 								fprintf(fp,"MOV [R%d] R%d\n",r1,r);
 								freeReg();
 								freeReg();
 								
 								return -1;
 		
-		case ADD			:	r1 = codeGenerate(root->Ptr1);
-								r2 = codeGenerate(root->Ptr2);
+		case ADD			:	r1 = codeGenerate(root->Ptr1,Lhead);
+								r2 = codeGenerate(root->Ptr2,Lhead);
 								fprintf(fp,"ADD R%d R%d\n",r1,r2);
 								freeReg();
 								
 								return r1;
 		
-		case SUB			:	r1 = codeGenerate(root->Ptr1);
-								r2 = codeGenerate(root->Ptr2);
+		case SUB			:	r1 = codeGenerate(root->Ptr1,Lhead);
+								r2 = codeGenerate(root->Ptr2,Lhead);
 								fprintf(fp,"SUB R%d R%d\n",r1,r2);
 								freeReg();
 								
 								return r1;
 		
-		case MUL			:	r1 = codeGenerate(root->Ptr1);
-								r2 = codeGenerate(root->Ptr2);
+		case MUL			:	r1 = codeGenerate(root->Ptr1,Lhead);
+								r2 = codeGenerate(root->Ptr2,Lhead);
 								fprintf(fp,"MUL R%d R%d\n",r1,r2);
 								freeReg();
 								
 								return r1;
 		
-		case DIV			:	r1 = codeGenerate(root->Ptr1);
-								r2 = codeGenerate(root->Ptr2);
+		case DIV			:	r1 = codeGenerate(root->Ptr1,Lhead);
+								r2 = codeGenerate(root->Ptr2,Lhead);
 								fprintf(fp,"DIV R%d R%d\n",r1,r2);
 								freeReg();
 								
 								return r1;
 		
-		case MOD			:	r1 = codeGenerate(root->Ptr1);
-								r2 = codeGenerate(root->Ptr2);
+		case MOD			:	r1 = codeGenerate(root->Ptr1,Lhead);
+								r2 = codeGenerate(root->Ptr2,Lhead);
 								fprintf(fp,"MOD R%d R%d\n",r1,r2);
 								freeReg();
 								
 								return r1;
 		
-		case GT				:	r1 = codeGenerate(root->Ptr1);
-								r2 = codeGenerate(root->Ptr2);
+		case GT				:	r1 = codeGenerate(root->Ptr1,Lhead);
+								r2 = codeGenerate(root->Ptr2,Lhead);
 								fprintf(fp,"GT R%d R%d\n",r1,r2);
 								freeReg();
 								
 								return r1;
 		
-		case LT				:	r1 = codeGenerate(root->Ptr1);
-								r2 = codeGenerate(root->Ptr2);
+		case LT				:	r1 = codeGenerate(root->Ptr1,Lhead);
+								r2 = codeGenerate(root->Ptr2,Lhead);
 								fprintf(fp,"LT R%d R%d\n",r1,r2);
 								freeReg();
 								
 								return r1;
 		
-		case GTE			:	r1 = codeGenerate(root->Ptr1);
-								r2 = codeGenerate(root->Ptr2);
+		case GTE			:	r1 = codeGenerate(root->Ptr1,Lhead);
+								r2 = codeGenerate(root->Ptr2,Lhead);
 								fprintf(fp,"GE R%d R%d\n",r1,r2);
 								freeReg();
 								
 								return r1;
 		
-		case LTE			:	r1 = codeGenerate(root->Ptr1);
-								r2 = codeGenerate(root->Ptr2);
+		case LTE			:	r1 = codeGenerate(root->Ptr1,Lhead);
+								r2 = codeGenerate(root->Ptr2,Lhead);
 								fprintf(fp,"LE R%d R%d\n",r1,r2);
 								freeReg();
 								
 								return r1;
 
-		case EQ				:	r1 = codeGenerate(root->Ptr1);
-								r2 = codeGenerate(root->Ptr2);
+		case EQ				:	r1 = codeGenerate(root->Ptr1,Lhead);
+								r2 = codeGenerate(root->Ptr2,Lhead);
 								fprintf(fp,"EQ R%d R%d\n",r1,r2);
 								freeReg();
 								
 								return r1;
 		
-		case NE				:	r1 = codeGenerate(root->Ptr1);
-								r2 = codeGenerate(root->Ptr2);
+		case NE				:	r1 = codeGenerate(root->Ptr1,Lhead);
+								r2 = codeGenerate(root->Ptr2,Lhead);
 								fprintf(fp,"NE R%d R%d\n",r1,r2);
 								freeReg();
 								
 								return r1;
 		
-		case And			:	r1 = codeGenerate(root->Ptr1);
-								r2 = codeGenerate(root->Ptr2);
+		case And			:	r1 = codeGenerate(root->Ptr1,Lhead);
+								r2 = codeGenerate(root->Ptr2,Lhead);
 								fprintf(fp,"MUL R%d R%d\n",r1,r2);
 								
 								return r1;
 		
-		case Or				:	r1 = codeGenerate(root->Ptr1);
-								r2 = codeGenerate(root->Ptr2);
+		case Or				:	r1 = codeGenerate(root->Ptr1,Lhead);
+								r2 = codeGenerate(root->Ptr2,Lhead);
 								fprintf(fp,"ADD R%d R%d\n",r1,r2);
 								
 								return r1;
 		
 		case Not			:	r1 = getReg();
-								r2 = codeGenerate(root->Ptr1);
+								r2 = codeGenerate(root->Ptr1,Lhead);
 								fprintf(fp,"MOV R%d %d\n",r1,1);
 								fprintf(fp,"SUB R%d R%d\n",r1,r2);
 								
@@ -307,20 +335,15 @@ int codeGenerate(Tnode *root,struct Lsymbol **Lhead)
 								
 								return r;
 		
-		case IDFR			:	lnode = Llookup(root->NAME,Lhead);
-								gnode = Glookup(root->NAME);
+		case IDFR			:	loc = lookupBinding(root->NAME,Lhead);
 								
-								if(lnode != NULL)
-									return *lnode->BINDING;
-								else return *gnode->BINDING;
-								
-								loc = Glookup(root->NAME)->BINDING;
 								r1 = getReg();
-								fprintf(fp,"MOV R%d [%d]\n",r1,loc);
+								fprintf(fp,"MOV R%d [R%d]\n",r1,loc);
+								freeReg();
 								
 								return r1;
 		
-		case ARRAYIDFR		:	r1 = codeGenerate(root->Ptr1);
+		case ARRAYIDFR		:	r1 = codeGenerate(root->Ptr1,Lhead);
 								loc = Glookup(root->NAME)->BINDING;
 								r2 = getReg();
 								fprintf(fp,"MOV R%d %d\n",r2,loc);
@@ -337,10 +360,67 @@ int codeGenerate(Tnode *root,struct Lsymbol **Lhead)
 	}
 }
 
+
+/*	Hierarchical lookup for an identifier, first in local symbol table, then global table.
+	Returns absolute location of the identifier in stack
+	*/
+int lookupBinding(char *NAME,struct Lsymbol **Lhead)
+{
+	struct Lsymbol *lnode;
+	struct Gsymbol *gnode;
+	int bind,r1,r2,r3,type;
+	
+	lnode = Llookup(NAME,Lhead);
+	gnode = Glookup(NAME);
+	
+	if(lnode != NULL)
+	{
+		type = lnode->TYPE;
+		bind = lnode->BINDING;
+		
+		r1 = getReg();
+		fprintf(fp,"MOV R%d BP\n",r1);
+		
+		r2 = getReg();
+		fprintf(fp,"MOV R%d %d\n",r2,bind);
+		
+		fprintf(fp,"ADD R%d R%d\n",r1,r2);
+		freeReg();
+		
+		switch(type)
+		{
+			case INTGRALIAS		:
+			case BOOLALIAS		:	r2 = getReg();
+									fprintf(fp,"MOV R%d [BP]\n",r2);
+									
+									r3 = getReg();
+									fprintf(fp,"MOV R%d [R%d]\n",r3,r1);
+									
+									fprintf(fp,"ADD R%d R%d\n",r2,r3);
+									freeReg();
+									
+									fprintf(fp,"MOV R%d R%d\n",r1,r2);
+									freeReg();
+									
+									break;
+		}
+		
+		return r1;
+	}
+	
+	else
+	{
+		r1 = getReg();
+		fprintf(fp,"MOV R%d %d\n",r1,gnode->BINDING);
+		
+		return r1;
+	}
+}
+
 void pushGlobalVar()
 {
 	struct Gsymbol *ptr = Ghead;
-	int i;
+	int i,r;
 	
 	while(ptr)
 	{	
@@ -358,9 +438,10 @@ void pushGlobalVar()
 	}
 }
 
-void pushLocalVar(&Lhead)
+void pushLocalVar(struct Lsymbol **Lhead)
 {
-	struct Lsymbol *ptr = Lhead;
+	struct Lsymbol *ptr = *Lhead;
+	int r;
 	
 	while(ptr)
 	{
@@ -372,10 +453,27 @@ void pushLocalVar(&Lhead)
 	}
 }
 
-/*	Push function call parameters in reverse
+
+/*	Push all registers that are currently in use into stack
+	*/
+int pushAllRegs()
+{
+	int i = 0;
+	
+	while(i <= regcnt)
+	{
+		fprintf(fp,"PUSH R%d\n",i);
+		i++;
+	}
+}
+
+
+/*	Push function call parameters in reverse onto the stack
 	*/
 void pushCallParams(Tnode *root,struct Lsymbol **Lhead)
 {
+	int r1,r2;
+	
 	if(root == NULL)
 		return;
 	
@@ -393,4 +491,24 @@ void pushCallParams(Tnode *root,struct Lsymbol **Lhead)
 								freeReg();
 								break;
 	}
+}
+
+void popAllArgs(ArgStruct *Ahead)
+{
+	ArgStruct *ptr = Ahead;
+	
+	while(ptr)
+	{
+		fprintf(fp,"POP R0");
+		ptr = ptr->NEXT;
+	}
+}
+
+void restoreRegs(int cnt)
+{
+	regcnt = cnt;
+	
+	int r = cnt;
+	while(r >= 0)
+		fprintf(fp,"POP R%d\n",r);
 }
