@@ -1,0 +1,34 @@
+decl
+	integer f(integer x);
+enddecl
+
+integer f(integer x)
+{
+	decl
+		integer t;
+	enddecl
+
+	begin
+	if(x>=11) then
+		t = 11;
+	else 
+		t = f(f(x+1));
+	endif;
+	
+	return t;
+	end
+}
+
+integer main()
+{
+	decl
+		integer n;
+	enddecl
+
+	begin
+	read(n);
+	write(f(n));
+	
+	return 1;
+	end
+}

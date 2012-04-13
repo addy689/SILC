@@ -206,4 +206,5 @@ int *binding;
 int locpos,locneg,regcnt,labelcnt;
 FILE *fp;
 
+int get,fre;
 #endif

@@ -13,6 +13,7 @@ int codeGenerate(Tnode *root,struct Lsymbol **Lhead);
 int lookupBinding(char *NAME,struct Lsymbol **Lhead);
 int pushAllRegs();
 void pushCallParams(Tnode *root,struct Lsymbol **Lhead);
+void popAllLocal(struct Lsymbol **Lhead);
 void popAllArgs(ArgStruct *Ahead);
 void restoreRegs(int cnt);
 void pushLocalVar(struct Lsymbol **Lhead);

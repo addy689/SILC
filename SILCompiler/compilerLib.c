@@ -396,11 +396,13 @@ int getNegativeLoc()
 
 int getReg()
 {
+	get++;
 	return ++regcnt;
 }
 
 void freeReg()
 {
+	fre++;
 	--regcnt;
 }
 
