@@ -14,7 +14,7 @@ int interpreter(Tnode *root,struct Lsymbol **Lhead)
 	{
 		case MAINBLOCK		:	localDecInstall(root->Ptr1,Lhead);
 								return evalBody(root->Ptr2,Lhead);
-	
+		
 		case FUNCBLOCK		:	localDecInstall(root->Ptr2,Lhead);
 								return evalBody(root->Ptr3,Lhead);
 	}
@@ -22,9 +22,10 @@ int interpreter(Tnode *root,struct Lsymbol **Lhead)
 
 int evalBody(Tnode *root,struct Lsymbol **Lhead)
 {
-	int t;
+	int t,*loc;
 	struct Gsymbol *gnode;
 	struct Lsymbol *lnode;
+	ArgStruct *Ahead;
 	
 	if(root == NULL)
 		return;
@@ -35,31 +36,24 @@ int evalBody(Tnode *root,struct Lsymbol **Lhead)
 								return evalBody(root->Ptr2,Lhead);
 		
 		case FUNCCALL		:	gnode = Glookup(root->NAME);
-								Arghead = gnode->ARGLIST;
+								Ahead = gnode->ARGLIST;
 								
 								struct Lsymbol *Ltable;
 								Ltable = NULL;
 								
-								if(Arghead != NULL)
-									funcParamInstall(root->Ptr1,Lhead,&Ltable);
+								if(Ahead != NULL)
+									funcParamInstall(root->Ptr1,Lhead,&Ltable,&Ahead);
 								
 								tempnode = funcLookup(root->NAME);
 								return interpreter(tempnode,&Ltable);
 		
-		case IDADDR			:	lnode = Llookup(root->NAME,Lhead);
-								gnode = Glookup(root->NAME);
-								
-								if(lnode != NULL)
-									binding = lnode->LOCATION;
-								else binding = gnode->LOCATION;
-								
-								return *binding;
+		case IDADDR			:	binding = HlookupInterpreter(root->NAME,Lhead);
+								return;
 		
 		case ARRAYIDADDR	:	gnode = Glookup(root->NAME);
 								t = evalBody(root->Ptr1,Lhead);
 								binding = gnode->LOCATION + t;
-								
-								return *binding;
+								return;
 		
 		case RET			:	return evalBody(root->Ptr1,Lhead);
 		
@@ -73,13 +67,8 @@ int evalBody(Tnode *root,struct Lsymbol **Lhead)
 									evalBody(root->Ptr3,Lhead);
 								return;
 		
-		case ASSIGN			:	lnode = Llookup(root->NAME,Lhead);
-								gnode = Glookup(root->NAME);
-								
-								if(lnode != NULL)
-									*lnode->LOCATION = evalBody(root->Ptr1,Lhead);
-								else *gnode->LOCATION = evalBody(root->Ptr1,Lhead);
-								
+		case ASSIGN			:	loc = HlookupInterpreter(root->NAME,Lhead);
+								*loc = evalBody(root->Ptr1,Lhead);
 								return;
 		
 		case ARRAYASSIGN	:	gnode = Glookup(root->NAME);
@@ -87,12 +76,8 @@ int evalBody(Tnode *root,struct Lsymbol **Lhead)
 								return;
 		
 		case RD				:	scanf("%d",&var);
-								lnode = Llookup(root->NAME,Lhead);
-								gnode = Glookup(root->NAME);
-								
-								if(lnode != NULL)
-									*lnode->LOCATION = var;
-								else *gnode->LOCATION = var;
+								loc = HlookupInterpreter(root->NAME,Lhead);
+								*loc = var;
 								return;
 		
 		case ARRAYRD		:	scanf("%d",&var);
@@ -135,12 +120,8 @@ int evalBody(Tnode *root,struct Lsymbol **Lhead)
 		
 		case False			:	return 0;
 		
-		case IDFR			:	lnode = Llookup(root->NAME,Lhead);
-								gnode = Glookup(root->NAME);
-								
-								if(lnode != NULL)
-									return *lnode->LOCATION;
-								else return *gnode->LOCATION;
+		case IDFR			:	loc = HlookupInterpreter(root->NAME,Lhead);
+								return *loc;
 		
 		case ARRAYIDFR		:	gnode = Glookup(root->NAME);
 								return gnode->LOCATION[evalBody(root->Ptr1,Lhead)];
@@ -151,7 +132,22 @@ int evalBody(Tnode *root,struct Lsymbol **Lhead)
 	}
 }
 
-int funcParamInstall(Tnode *root,struct Lsymbol **Lhead,struct Lsymbol **Ltable)
+int *HlookupInterpreter(char *NAME,struct Lsymbol **Lhead)
+{
+	struct Lsymbol *lnode;
+	struct Gsymbol *gnode;
+	int type;
+	
+	lnode = Llookup(NAME,Lhead);
+	gnode = Glookup(NAME);
+	
+	if(lnode != NULL)
+		return lnode->LOCATION;
+	else return gnode->LOCATION;
+	
+}
+
+int funcParamInstall(Tnode *root,struct Lsymbol **Lhead,struct Lsymbol **Ltable,ArgStruct **Ahead)
 {
 	int t;
 	
@@ -160,13 +156,13 @@ int funcParamInstall(Tnode *root,struct Lsymbol **Lhead,struct Lsymbol **Ltable)
 	
 	switch(root->NODETYPE)
 	{
-		case CONTINUE		:	funcParamInstall(root->Ptr1,Lhead,Ltable);
-								return funcParamInstall(root->Ptr2,Lhead,Ltable);
+		case CONTINUE		:	funcParamInstall(root->Ptr1,Lhead,Ltable,Ahead);
+								return funcParamInstall(root->Ptr2,Lhead,Ltable,Ahead);
 	
 		case FUNCPARAM		:	binding = NULL;
 								t = evalBody(root->Ptr1,Lhead);
-								LinstallBind(Arghead->NAME,Arghead->TYPE,t,Ltable);
-								Arghead = Arghead->NEXT;
+								LinstallBind((*Ahead)->NAME,(*Ahead)->TYPE,t,Ltable);
+								*Ahead = (*Ahead)->NEXT;
 								return;
 	}
 }

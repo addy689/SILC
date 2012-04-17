@@ -1,5 +1,5 @@
 decl
-		integer swap(integer &a,&b),arr[5];
+	integer swap(integer &a,&b),arr[5];
 enddecl
 
 integer swap(integer &a,&b){

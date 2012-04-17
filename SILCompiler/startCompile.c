@@ -36,16 +36,18 @@ void compile(Tnode *gdeclroot,Tnode *fdefroot,Tnode *mainroot)
 		
 		struct Lsymbol *Ltable;
 		Ltable = NULL;
-/*		interpreter(mainroot,&Ltable);*/
-
+		interpreter(mainroot,&Ltable);
+		
 		get = 0;
 		fre = 0;
+		
+		regcnt = -1;
 		module = CODEGEN;
 		fp = fopen("SIM_Simulator/SIMcode","w");
 		funcCodeGen(fdefroot);
 		funcCodeGen(mainroot);
-		fprintf(fp,"\n\nGet = %d",get);
-		fprintf(fp,"\n\nGet = %d",fre);
+		callToMain();
+		
 		fclose(fp);
 	}
 }

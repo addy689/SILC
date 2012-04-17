@@ -9,6 +9,7 @@
 
 int interpreter(Tnode *root,struct Lsymbol **Lhead);
 int evalBody(Tnode *root,struct Lsymbol **Lhead);
-int funcParamInstall(Tnode *root,struct Lsymbol **Lhead,struct Lsymbol **Ltable);
+int *HlookupInterpreter(char *NAME,struct Lsymbol **Lhead);
+int funcParamInstall(Tnode *root,struct Lsymbol **Lhead,struct Lsymbol **Ltable,ArgStruct **Ahead);
 
 #endif

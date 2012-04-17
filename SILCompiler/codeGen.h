@@ -7,10 +7,11 @@
 
 #include "compilerLib.h"
 
+void callToMain();
 void funcCodeGen(Tnode *root);
 void argInstallLocal(ArgStruct *Arghead,struct Lsymbol **Lhead);
 int codeGenerate(Tnode *root,struct Lsymbol **Lhead);
-int lookupBinding(char *NAME,struct Lsymbol **Lhead);
+int Hlookup(char *NAME,struct Lsymbol **Lhead);
 int pushAllRegs();
 void pushCallParams(Tnode *root,struct Lsymbol **Lhead);
 void popAllLocal(struct Lsymbol **Lhead);

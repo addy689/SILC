@@ -12,6 +12,7 @@ Main/t.c
 Main/sil
 Main/SIM_Simulator/sim
 Main/SIM_Simulator/lex.yy.c
+Main/SIM_Simulator/SIMcode
 
 *.o
 */*.o

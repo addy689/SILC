@@ -51,9 +51,9 @@ void globalInstall(Tnode *root)
 								globalInstall(root->Ptr2);
 								break;
 		
-		case IDFRDECL		:
+		case IDFRDECL		:	Arghead = NULL;
 		
-		case ARRAYDECL		:
+		case ARRAYDECL		:	Arghead = NULL;
 		
 		case FUNCDECL		:	gnode = Glookup(root->NAME);
 								
@@ -200,18 +200,14 @@ void Ginstall(char *NAME,int TYPE,int SIZE,ArgStruct *ARGLIST)
 	Gnode->TYPE = TYPE;
 	Gnode->SIZE = SIZE;
 	
-	if(module == CODEGEN)
+	if(SIZE >= 0)
 	{
-		if(SIZE >= 0)
-		{
-			Gnode->BINDING = getPositiveLoc();
-			
-			for(i=0;i<SIZE-1;i++)
-				getPositiveLoc();
-		}
-		
-		else Gnode->BINDING = getLabel();
+		Gnode->BINDING = getPositiveLoc();
+
+		for(i=0;i<SIZE-1;i++)
+			getPositiveLoc();
 	}
+	else Gnode->BINDING = getLabel();
 	
 	Gnode->NEXT = Ghead;
 	Ghead = Gnode;
@@ -238,6 +234,7 @@ void localDecInstall(Tnode *root,struct Lsymbol **Lhead)
 								break;
 		
 		case IDFRDECL		:	binding = NULL;
+								idstatus = 0;
 								LinstallBind(root->NAME,decnode->TYPE,garbval,Lhead);
 								break;
 	}
@@ -285,7 +282,7 @@ void LinstallBind(char *NAME,int TYPE,int VALUE,struct Lsymbol **Lhead)
 								
 								break;
 		
-		case CODEGEN		:	if(idstatus = ARGUMENT)
+		case CODEGEN		:	if(idstatus == ARGUMENT)
 									Lnode->BINDING = getNegativeLoc();
 									
 									//Lnode->BINDING = address of calling function's identifier
@@ -325,7 +322,7 @@ int returnAddrType(int TYPE)
 		return INTGRALIAS;
 	
 	else if(TYPE == BOOL)
-		idtype = BOOLALIAS;
+		return BOOLALIAS;
 	
 	else return;
 }
@@ -409,11 +406,6 @@ void freeReg()
 int getLabel()
 {
 	return ++labelcnt;
-}
-
-void freeLabel()
-{
-	--labelcnt;
 }
 
 
