@@ -4,8 +4,10 @@ A compiler for the *Simple Integer Language (SIL)* that reads a SIL source progr
 Source Language (SIL) description can be found at [http://athena.nitc.ac.in/~kmurali/Compiler/sil.html]  
 Target Machine (SIM) Architecture description can be found at [http://athena.nitc.ac.in/~kmurali/Compiler/sim.html]
 
-## Authors :
+## Author :
 * Addy Singh <addy689@gmail.com>
+
+## Contributors :
 * Saurabh Sinha <saurabh.nitc10@gmail.com>
 * Vipin Nair <swvist@gmail.com>
 
@@ -30,11 +32,11 @@ Target Machine (SIM) Architecture description can be found at [http://athena.nit
 	</tr>
 	
 	<tr>
-		<td>Main</td><td>Contains a <i>Makefile</i> for compiling the compiler source programs, SIL source program files <i>SILsource{1-4}</i>, and a file <i>SIMCode</i> (target file for the instructions that the compiler generates)</td>
+		<td>Main</td><td>Contains a <i>Makefile</i> for compiling the compiler source programs, SIL source program files</td>
 	</tr>
 	
 	<tr>
-		<td>Main/SIM_Simulator</td><td>Contains the simulator for SIM</td>
+		<td>Main/SIM_Simulator</td><td>Contains the simulator for SIM, and a file <i>SIMcode</i> (target file for the SIM instructions that the compiler generates for an input SIL program)</td>
 	</tr>
 
 </table>
