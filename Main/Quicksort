@@ -1,0 +1,73 @@
+decl
+	integer quicksort(integer first,last),x[30];
+enddecl
+
+integer quicksort(integer first,last)
+{
+	decl
+		integer pivot,j,temp,i,y;
+	enddecl
+	
+	begin
+		if(first<last) then
+			
+			pivot = first;
+			i = first;
+			j = last;
+			
+			
+			while(i<j) do
+				while(x[i]<=x[pivot] AND i<last) do
+					i = i+1;
+				endwhile;
+			
+				while(x[j] > x[pivot]) do 
+					j = j-1;
+				endwhile;
+			
+				if(i<j) then
+					temp = x[i];
+					x[i] = x[j];
+					x[j] = temp;
+				endif;
+			endwhile;
+			
+			temp = x[pivot];
+			x[pivot] = x[j];
+			x[j] = temp;
+			
+			y = quicksort(first,j-1);
+			y = quicksort(j+1,last);
+		
+		endif;
+		
+		return 1;
+	end
+}
+
+integer main()
+{
+	decl
+		integer size,i;
+	enddecl
+	
+	begin
+		read(size);
+		
+		i = 0;
+		while(i<size) do
+			read(x[i]);
+			i = i+1;
+		endwhile;
+		
+		i = quicksort(0,size-1);
+		
+		i = 0;
+		while(i<size) do
+			write(x[i]);
+			i=i+1;
+		endwhile;
+		
+		return 0;
+	end
+}
